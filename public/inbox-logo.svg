@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 140" width="100%" height="100%">
+  <!-- Envelope Graphic -->
+  <g transform="translate(10, 10)">
+    <!-- Back green flap -->
+    <polygon points="10,65 70,10 130,65" fill="#7BB83C" />
+    
+    <!-- White Letter Document -->
+    <rect x="25" y="25" width="90" height="70" rx="3" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5" />
+    <!-- Letter lines -->
+    <rect x="35" y="38" width="35" height="4.5" fill="#009FE3" rx="1.5" />
+    <rect x="35" y="48" width="70" height="3" fill="#009FE3" rx="1.5" />
+    <rect x="35" y="56" width="60" height="3" fill="#009FE3" rx="1.5" />
+    <rect x="35" y="64" width="45" height="3" fill="#009FE3" rx="1.5" />
+
+    <!-- Left Envelope Red/Orange Flap -->
+    <polygon points="10,40 10,115 80,78" fill="#E84A27" />
+    
+    <!-- Right Envelope Blue Flap -->
+    <polygon points="130,40 130,115 10,115 80,78" fill="#009FE3" />
+  </g>
+
+  <!-- Text Section -->
+  <!-- "Inbox" -->
+  <text x="175" y="78" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-weight="800" font-size="68" fill="#111827" letter-spacing="-1px">Inbox</text>
+  
+  <!-- Red/Orange underline bar -->
+  <rect x="175" y="93" width="315" height="4" fill="#E84A27" rx="2" />
+  
+  <!-- "Infotech Pvt. Ltd." -->
+  <text x="176" y="124" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-weight="500" font-size="29" fill="#111827" letter-spacing="0.2px">Infotech Pvt. Ltd.</text>
+</svg>

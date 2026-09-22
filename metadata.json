@@ -1,0 +1,6 @@
+{
+  "name": "Inbox Infotech E-Commerce",
+  "description": "A complete, modern, responsive e-commerce platform demo featuring full product catalog, search, filters, cart, wishlist, multi-step checkout, order tracking, user profile, and admin dashboard.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

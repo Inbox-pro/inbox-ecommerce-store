@@ -54,7 +54,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
             Inbox
           </span>
           <span className="ml-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-orange-700 tracking-wide uppercase">
-            Store
+            Emporium
           </span>
         </div>
         {/* Underline bar */}

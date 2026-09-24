@@ -484,7 +484,7 @@ export const Home: React.FC<HomeProps> = ({
                   ))}
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed italic">
-                  "Applied code SAVE20 and got $60 off instantly! Tracking updates via BlueDart were transparent all the way to delivery. Highly recommend Inbox Store!"
+                  "Applied code SAVE20 and got $60 off instantly! Tracking updates via BlueDart were transparent all the way to delivery. Highly recommend Inbox Emporium!"
                 </p>
               </div>
               <div className="flex items-center gap-3 mt-4 pt-4 border-t border-slate-100">

@@ -49,7 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const newUser = await authService.register(name, email, phone);
       setUser(newUser);
-      showToast(`Welcome to Inbox Store, ${newUser.name}!`, {
+      showToast(`Welcome to Inbox Emporium, ${newUser.name}!`, {
         message: 'Your demo account is ready.',
         type: 'success',
       });

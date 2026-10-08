@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { BrandLogo } from './BrandLogo';
 import { useToast } from '../../context/ToastContext';
+import { useTranslation } from '../../context/LanguageContext';
 import { Mail, Phone, MapPin, ShieldCheck, Truck, RotateCcw, Headphones, Send } from 'lucide-react';
 
 interface FooterProps {
@@ -9,16 +10,17 @@ interface FooterProps {
 
 export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
   const { showToast } = useToast();
+  const { t, tCategory } = useTranslation();
   const [newsletterEmail, setNewsletterEmail] = useState('');
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newsletterEmail || !newsletterEmail.includes('@')) {
-      showToast('Please enter a valid email address', { type: 'error' });
+      showToast(t('toast.validEmailRequired'), { type: 'error' });
       return;
     }
-    showToast('Subscribed to newsletter!', {
-      message: 'Exclusive discounts and product releases will be sent to your inbox.',
+    showToast(t('toast.subscribedNewsletter'), {
+      message: t('toast.subscribedNewsletterDesc'),
       type: 'success',
     });
     setNewsletterEmail('');
@@ -34,8 +36,8 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               <Truck className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-sm font-bold text-white">Free Express Shipping</p>
-              <p className="text-xs text-slate-400 mt-0.5">On orders above $75</p>
+              <p className="text-sm font-bold text-white">{t('footer.freeShippingTitle')}</p>
+              <p className="text-xs text-slate-400 mt-0.5">{t('footer.freeShippingSub')}</p>
             </div>
           </div>
 
@@ -44,8 +46,8 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               <RotateCcw className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-sm font-bold text-white">7-Day Easy Returns</p>
-              <p className="text-xs text-slate-400 mt-0.5">Hassle-free instant refund</p>
+              <p className="text-sm font-bold text-white">{t('footer.easyReturnsTitle')}</p>
+              <p className="text-xs text-slate-400 mt-0.5">{t('footer.easyReturnsSub')}</p>
             </div>
           </div>
 
@@ -54,8 +56,8 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-sm font-bold text-white">100% Genuine Brands</p>
-              <p className="text-xs text-slate-400 mt-0.5">Direct verified suppliers</p>
+              <p className="text-sm font-bold text-white">{t('footer.genuineBrandsTitle')}</p>
+              <p className="text-xs text-slate-400 mt-0.5">{t('footer.genuineBrandsSub')}</p>
             </div>
           </div>
 
@@ -64,8 +66,8 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               <Headphones className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-sm font-bold text-white">24/7 Dedicated Support</p>
-              <p className="text-xs text-slate-400 mt-0.5">Live chat & phone hotline</p>
+              <p className="text-sm font-bold text-white">{t('footer.supportTitle')}</p>
+              <p className="text-xs text-slate-400 mt-0.5">{t('footer.supportSub')}</p>
             </div>
           </div>
         </div>
@@ -80,7 +82,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               <BrandLogo size="md" />
             </div>
             <p className="text-slate-400 mt-4 leading-relaxed text-xs max-w-sm">
-              Inbox Infotech Pvt. Ltd. delivers an elevated digital commerce experience with an expansive catalog spanning modern electronics, contemporary fashion, home essentials, and lifestyle products.
+              {t('footer.aboutDesc')}
             </p>
 
             <div className="flex flex-col gap-2 mt-5 text-slate-400 text-xs">
@@ -101,36 +103,36 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
 
           {/* Col 2: Quick Links */}
           <div>
-            <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Quick Links</h4>
+            <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">{t('footer.quickLinks')}</h4>
             <ul className="flex flex-col gap-2.5">
               <li>
-                <button onClick={() => onNavigate('home')} className="hover:text-white transition-colors">
-                  Home
+                <button onClick={() => onNavigate('home')} className="hover:text-white transition-colors cursor-pointer">
+                  {t('nav.home')}
                 </button>
               </li>
               <li>
-                <button onClick={() => onNavigate('products')} className="hover:text-white transition-colors">
-                  All Products
+                <button onClick={() => onNavigate('products')} className="hover:text-white transition-colors cursor-pointer">
+                  {t('nav.allProducts')}
                 </button>
               </li>
               <li>
-                <button onClick={() => onNavigate('products', 'deals')} className="hover:text-white transition-colors">
-                  Flash Deals
+                <button onClick={() => onNavigate('products', 'deals')} className="hover:text-white transition-colors cursor-pointer">
+                  {t('nav.deals')}
                 </button>
               </li>
               <li>
-                <button onClick={() => onNavigate('wishlist')} className="hover:text-white transition-colors">
-                  Saved Wishlist
+                <button onClick={() => onNavigate('wishlist')} className="hover:text-white transition-colors cursor-pointer">
+                  {t('nav.savedWishlist')}
                 </button>
               </li>
               <li>
-                <button onClick={() => onNavigate('cart')} className="hover:text-white transition-colors">
-                  Shopping Cart
+                <button onClick={() => onNavigate('cart')} className="hover:text-white transition-colors cursor-pointer">
+                  {t('nav.shoppingCart')}
                 </button>
               </li>
               <li>
-                <button onClick={() => onNavigate('admin')} className="text-blue-400 hover:text-blue-300 font-semibold">
-                  Admin Demo Portal
+                <button onClick={() => onNavigate('admin')} className="text-blue-400 hover:text-blue-300 font-semibold cursor-pointer">
+                  {t('nav.adminDashboardDemo')}
                 </button>
               </li>
             </ul>
@@ -138,36 +140,36 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
 
           {/* Col 3: Popular Categories */}
           <div>
-            <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Categories</h4>
+            <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">{t('footer.categories')}</h4>
             <ul className="flex flex-col gap-2.5">
               <li>
-                <button onClick={() => onNavigate('products', 'Electronics')} className="hover:text-white transition-colors">
-                  Electronics & Audio
+                <button onClick={() => onNavigate('products', 'Electronics')} className="hover:text-white transition-colors cursor-pointer">
+                  {tCategory('Electronics')}
                 </button>
               </li>
               <li>
-                <button onClick={() => onNavigate('products', 'Fashion')} className="hover:text-white transition-colors">
-                  Men & Women Fashion
+                <button onClick={() => onNavigate('products', 'Fashion')} className="hover:text-white transition-colors cursor-pointer">
+                  {tCategory('Fashion')}
                 </button>
               </li>
               <li>
-                <button onClick={() => onNavigate('products', 'Home & Kitchen')} className="hover:text-white transition-colors">
-                  Home & Smart Kitchen
+                <button onClick={() => onNavigate('products', 'Home & Kitchen')} className="hover:text-white transition-colors cursor-pointer">
+                  {tCategory('Home & Kitchen')}
                 </button>
               </li>
               <li>
-                <button onClick={() => onNavigate('products', 'Sports')} className="hover:text-white transition-colors">
-                  Fitness & Outdoor Sports
+                <button onClick={() => onNavigate('products', 'Sports')} className="hover:text-white transition-colors cursor-pointer">
+                  {tCategory('Sports')}
                 </button>
               </li>
               <li>
-                <button onClick={() => onNavigate('products', 'Beauty')} className="hover:text-white transition-colors">
-                  Beauty & Skincare
+                <button onClick={() => onNavigate('products', 'Beauty')} className="hover:text-white transition-colors cursor-pointer">
+                  {tCategory('Beauty')}
                 </button>
               </li>
               <li>
-                <button onClick={() => onNavigate('products', 'Books')} className="hover:text-white transition-colors">
-                  Books & Guides
+                <button onClick={() => onNavigate('products', 'Books')} className="hover:text-white transition-colors cursor-pointer">
+                  {tCategory('Books')}
                 </button>
               </li>
             </ul>
@@ -175,9 +177,9 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
 
           {/* Col 4: Newsletter & Deals */}
           <div>
-            <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Stay Updated</h4>
+            <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">{t('footer.stayUpdated')}</h4>
             <p className="text-slate-400 text-xs mb-3 leading-relaxed">
-              Subscribe to unlock 15% off coupon code <strong className="text-orange-400">WELCOME15</strong> and receive flash deal alerts.
+              {t('footer.stayUpdatedDesc')}
             </p>
             <form onSubmit={handleSubscribe} className="flex flex-col gap-2">
               <input
@@ -185,7 +187,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 required
                 value={newsletterEmail}
                 onChange={(e) => setNewsletterEmail(e.target.value)}
-                placeholder="Your email address"
+                placeholder={t('footer.emailPlaceholder')}
                 className="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500"
               />
               <button
@@ -193,7 +195,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 className="w-full py-2.5 px-4 bg-[#E84A27] hover:bg-[#d63f1f] text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
               >
                 <Send className="w-3.5 h-3.5" />
-                Subscribe to Newsletter
+                {t('footer.subscribeBtn')}
               </button>
             </form>
           </div>
@@ -202,12 +204,12 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
         {/* Bottom Bar: Copyright, Payment Methods, Presentation Notice */}
         <div className="mt-12 pt-8 border-t border-slate-900 flex flex-col md:flex-row items-center justify-between gap-4 text-slate-500 text-[11px]">
           <div>
-            © {new Date().getFullYear()} <strong>Inbox Infotech Pvt. Ltd.</strong> All rights reserved. Built as a comprehensive, responsive full-stack capable demo presentation.
+            © {new Date().getFullYear()} <strong>Inbox Infotech Pvt. Ltd.</strong> {t('footer.copyright')}
           </div>
 
           {/* Payment Method Badges */}
           <div className="flex items-center gap-2">
-            <span className="text-slate-400 font-semibold">Accepted Demo Payments:</span>
+            <span className="text-slate-400 font-semibold">{t('footer.acceptedPayments')}</span>
             <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-semibold">Visa</span>
             <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-semibold">Mastercard</span>
             <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-semibold">UPI</span>

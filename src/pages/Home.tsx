@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Product, ProductCategory } from '../types';
 import { ProductCard } from '../components/product/ProductCard';
 import { CATEGORIES } from '../components/common/Navbar';
+import { useTranslation } from '../context/LanguageContext';
 import {
   Sparkles,
   ArrowRight,
@@ -37,34 +38,35 @@ export const Home: React.FC<HomeProps> = ({
   onQuickView,
   onNavigate,
 }) => {
+  const { t, tCategory } = useTranslation();
   // Hero Carousel State
   const [activeHeroSlide, setActiveHeroSlide] = useState(0);
 
   const heroSlides = [
     {
-      title: 'Next-Gen Audio & Smart Tech',
-      subtitle: 'Premium Hi-Res Noise Cancelling Headphones & OLED Displays',
-      discount: 'UP TO 35% OFF',
+      titleKey: 'home.heroSlide1Title',
+      subtitleKey: 'home.heroSlide1Sub',
+      discountKey: 'home.heroSlide1Discount',
       category: 'Electronics',
-      cta: 'Shop Electronics',
+      ctaKey: 'home.heroSlide1Cta',
       image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=1200&q=80',
       bgGradient: 'linear-gradient(to right, #0f172a, #1e293b, #431407)',
     },
     {
-      title: 'Italian Leather & Streetwear',
-      subtitle: 'Timeless Tailored Silhouettes & Cloud-Cushioned Runners',
-      discount: 'NEW SEASON 2026',
+      titleKey: 'home.heroSlide2Title',
+      subtitleKey: 'home.heroSlide2Sub',
+      discountKey: 'home.heroSlide2Discount',
       category: 'Fashion',
-      cta: 'Explore Fashion',
+      ctaKey: 'home.heroSlide2Cta',
       image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=1200&q=80',
       bgGradient: 'linear-gradient(to right, #0f172a, #1c1917, #431407)',
     },
     {
-      title: 'Master Your Kitchen Craft',
-      subtitle: 'Italian Espresso Machines, Dual Air Fryers & Cast Iron Cookware',
-      discount: 'SPECIAL 25% OFF',
+      titleKey: 'home.heroSlide3Title',
+      subtitleKey: 'home.heroSlide3Sub',
+      discountKey: 'home.heroSlide3Discount',
       category: 'Home & Kitchen',
-      cta: 'Shop Home & Kitchen',
+      ctaKey: 'home.heroSlide3Cta',
       image: 'https://images.unsplash.com/photo-1517668808822-9ebb02f2a0e6?auto=format&fit=crop&w=1200&q=80',
       bgGradient: 'linear-gradient(to right, #0f172a, #18181b, #022c22)',
     },
@@ -108,14 +110,15 @@ export const Home: React.FC<HomeProps> = ({
               <div
                 key={index}
                 style={{ background: slide.bgGradient }}
-                className={`absolute inset-0 transition-opacity duration-1000 flex items-center ${activeHeroSlide === index ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
-                  }`}
+                className={`absolute inset-0 transition-opacity duration-1000 flex items-center ${
+                  activeHeroSlide === index ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
+                }`}
               >
                 {/* Background Image with Overlay */}
                 <div className="absolute inset-0 opacity-40 mix-blend-overlay">
                   <img
                     src={slide.image}
-                    alt={slide.title}
+                    alt={t(slide.titleKey)}
                     className="w-full h-full object-cover object-center"
                   />
                 </div>
@@ -124,15 +127,15 @@ export const Home: React.FC<HomeProps> = ({
                 <div className="relative z-20 max-w-2xl px-6 sm:px-12 py-12 flex flex-col items-start gap-4">
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E84A27] text-white text-xs font-black tracking-wider uppercase shadow-md">
                     <Flame className="w-3.5 h-3.5" />
-                    {slide.discount}
+                    {t(slide.discountKey)}
                   </span>
 
                   <h1 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
-                    {slide.title}
+                    {t(slide.titleKey)}
                   </h1>
 
                   <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-lg">
-                    {slide.subtitle}
+                    {t(slide.subtitleKey)}
                   </p>
 
                   <div className="flex flex-wrap items-center gap-3.5 mt-2">
@@ -140,14 +143,14 @@ export const Home: React.FC<HomeProps> = ({
                       onClick={() => onNavigate('products', slide.category)}
                       className="px-6 py-3.5 rounded-xl bg-white hover:bg-slate-100 text-slate-900 font-extrabold text-sm shadow-lg hover:shadow-xl transition-all flex items-center gap-2 active:scale-95 cursor-pointer"
                     >
-                      <span>{slide.cta}</span>
+                      <span>{t(slide.ctaKey)}</span>
                       <ArrowRight className="w-4 h-4 text-[#E84A27]" />
                     </button>
                     <button
                       onClick={() => onNavigate('products', 'deals')}
                       className="px-5 py-3.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-sm border border-white/20 backdrop-blur-md transition-colors cursor-pointer"
                     >
-                      View All Deals
+                      {t('home.viewAllDeals')}
                     </button>
                   </div>
                 </div>
@@ -160,8 +163,9 @@ export const Home: React.FC<HomeProps> = ({
                 <button
                   key={i}
                   onClick={() => setActiveHeroSlide(i)}
-                  className={`h-2.5 rounded-full transition-all duration-300 ${activeHeroSlide === i ? 'w-8 bg-[#E84A27]' : 'w-2.5 bg-white/40 hover:bg-white/70'
-                    }`}
+                  className={`h-2.5 rounded-full transition-all duration-300 ${
+                    activeHeroSlide === i ? 'w-8 bg-[#E84A27]' : 'w-2.5 bg-white/40 hover:bg-white/70'
+                  }`}
                   aria-label={`Slide ${i + 1}`}
                 />
               ))}
@@ -174,14 +178,14 @@ export const Home: React.FC<HomeProps> = ({
       <section className="max-w-[1500px] mx-auto px-4 sm:px-6 w-full">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900">Explore By Category</h2>
-            <p className="text-xs text-slate-500 mt-0.5">Find exactly what you're looking for across 8 departments</p>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900">{t('home.exploreByCategory')}</h2>
+            <p className="text-xs text-slate-500 mt-0.5">{t('home.exploreByCategoryDesc')}</p>
           </div>
           <button
             onClick={() => onNavigate('products')}
             className="text-xs font-bold text-orange-600 hover:text-orange-700 flex items-center gap-1 cursor-pointer"
           >
-            View Catalog →
+            {t('home.viewCatalog')}
           </button>
         </div>
 
@@ -200,9 +204,9 @@ export const Home: React.FC<HomeProps> = ({
                   </span>
                 </div>
                 <span className="text-xs font-bold text-slate-800 group-hover:text-orange-600 transition-colors mt-2.5 line-clamp-1">
-                  {cat}
+                  {tCategory(cat)}
                 </span>
-                <span className="text-[10px] text-slate-400 mt-0.5">{count} items</span>
+                <span className="text-[10px] text-slate-400 mt-0.5">{t('home.itemsCount', { count })}</span>
               </button>
             );
           })}
@@ -219,17 +223,17 @@ export const Home: React.FC<HomeProps> = ({
             <div>
               <div className="flex items-center gap-2 text-orange-200 text-xs font-bold uppercase tracking-wider mb-1">
                 <Zap className="w-4 h-4 fill-current text-amber-300" />
-                Limited Time Flash Offer
+                {t('home.flashOffer')}
               </div>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
-                Deals of the Day — Up to 35% OFF
+                {t('home.dealsOfDay')}
               </h2>
             </div>
 
             {/* Countdown Box */}
             <div className="flex items-center gap-2 bg-black/25 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/15">
               <Clock className="w-4 h-4 text-amber-300" />
-              <span className="text-xs font-semibold text-orange-100">Ends in:</span>
+              <span className="text-xs font-semibold text-orange-100">{t('home.endsIn')}</span>
               <div className="flex items-center gap-1 text-sm font-mono font-bold">
                 <span className="bg-white/20 px-2 py-0.5 rounded">
                   {String(timeLeft.hours).padStart(2, '0')}h
@@ -266,15 +270,15 @@ export const Home: React.FC<HomeProps> = ({
           <div>
             <div className="flex items-center gap-1.5 text-xs font-bold text-orange-600 uppercase tracking-wider mb-1">
               <TrendingUp className="w-4 h-4" />
-              Customer Favorites
+              {t('home.customerFavorites')}
             </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900">Trending Right Now</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900">{t('home.trendingRightNow')}</h2>
           </div>
           <button
             onClick={() => onNavigate('products')}
             className="text-xs font-bold text-orange-600 hover:text-orange-700 flex items-center gap-1 cursor-pointer"
           >
-            See More →
+            {t('home.seeMore')}
           </button>
         </div>
 
@@ -303,13 +307,13 @@ export const Home: React.FC<HomeProps> = ({
             </div>
             <div className="relative z-10">
               <span className="text-xs font-bold text-orange-400 uppercase tracking-wider">
-                Sound Reinvented
+                {t('home.promo1Tag')}
               </span>
               <h3 className="text-2xl font-bold mt-1 max-w-xs">
-                AuraSound Pro Studio Spatial ANC
+                {t('home.promo1Title')}
               </h3>
               <p className="text-xs text-slate-300 mt-2 max-w-xs">
-                Immerse yourself in acoustic precision with 40-hour playtime.
+                {t('home.promo1Desc')}
               </p>
             </div>
             <div className="relative z-10 mt-6">
@@ -317,7 +321,7 @@ export const Home: React.FC<HomeProps> = ({
                 onClick={() => onNavigate('products', 'Electronics')}
                 className="px-5 py-2.5 rounded-xl bg-[#E84A27] hover:bg-[#d63f1f] text-white text-xs font-bold flex items-center gap-2 shadow-md cursor-pointer"
               >
-                <span>Shop Tech Deals</span>
+                <span>{t('home.promo1Cta')}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -333,13 +337,13 @@ export const Home: React.FC<HomeProps> = ({
             </div>
             <div className="relative z-10">
               <span className="text-xs font-bold text-[#009FE3] uppercase tracking-wider">
-                Home Fitness Evolution
+                {t('home.promo2Tag')}
               </span>
               <h3 className="text-2xl font-bold mt-1 max-w-xs">
-                TitanGrip Smart Dial Dumbbells
+                {t('home.promo2Title')}
               </h3>
               <p className="text-xs text-slate-300 mt-2 max-w-xs">
-                Replace 15 pairs of weights with one seamless ergonomic dial.
+                {t('home.promo2Desc')}
               </p>
             </div>
             <div className="relative z-10 mt-6">
@@ -347,7 +351,7 @@ export const Home: React.FC<HomeProps> = ({
                 onClick={() => onNavigate('products', 'Sports')}
                 className="px-5 py-2.5 rounded-xl bg-[#009FE3] hover:bg-[#0284c7] text-white text-xs font-bold flex items-center gap-2 shadow-md cursor-pointer"
               >
-                <span>Explore Sports Gear</span>
+                <span>{t('home.promo2Cta')}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -361,15 +365,15 @@ export const Home: React.FC<HomeProps> = ({
           <div>
             <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1">
               <Award className="w-4 h-4" />
-              Top Rated by Thousands
+              {t('home.topRated')}
             </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900">Best-Selling Essentials</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900">{t('home.bestSellingEssentials')}</h2>
           </div>
           <button
             onClick={() => onNavigate('products')}
             className="text-xs font-bold text-orange-600 hover:text-orange-700 flex items-center gap-1 cursor-pointer"
           >
-            Browse All →
+            {t('home.browseAll')}
           </button>
         </div>
 
@@ -391,15 +395,15 @@ export const Home: React.FC<HomeProps> = ({
           <div>
             <div className="flex items-center gap-1.5 text-xs font-bold text-purple-600 uppercase tracking-wider mb-1">
               <Sparkles className="w-4 h-4" />
-              Just Dropped
+              {t('home.justDropped')}
             </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900">New Arrivals</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900">{t('home.newArrivals')}</h2>
           </div>
           <button
             onClick={() => onNavigate('products')}
             className="text-xs font-bold text-orange-600 hover:text-orange-700 flex items-center gap-1 cursor-pointer"
           >
-            View More →
+            {t('home.viewMore')}
           </button>
         </div>
 
@@ -420,10 +424,10 @@ export const Home: React.FC<HomeProps> = ({
         <div className="p-8 sm:p-10 bg-slate-100/80 rounded-3xl border border-slate-200">
           <div className="text-center max-w-lg mx-auto mb-8">
             <span className="text-xs font-bold text-orange-600 uppercase tracking-wider">
-              Verified Reviews
+              {t('home.verifiedReviews')}
             </span>
             <h2 className="text-2xl font-bold text-slate-900 mt-1">
-              Loved by Over 50,000+ Customers
+              {t('home.lovedByCustomers')}
             </h2>
           </div>
 
@@ -436,7 +440,7 @@ export const Home: React.FC<HomeProps> = ({
                   ))}
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed italic">
-                  "The AuraSound Pro headphones arrived in just 2 days. The noise cancellation and audio quality rival headphones twice the price. Seamless demo checkout too!"
+                  {t('home.testimonial1Quote')}
                 </p>
               </div>
               <div className="flex items-center gap-3 mt-4 pt-4 border-t border-slate-100">
@@ -447,7 +451,7 @@ export const Home: React.FC<HomeProps> = ({
                 />
                 <div>
                   <p className="text-xs font-bold text-slate-900">Ananya Sen</p>
-                  <p className="text-[10px] text-slate-400">Verified Buyer • Mumbai</p>
+                  <p className="text-[10px] text-slate-400">{t('home.testimonial1Buyer')}</p>
                 </div>
               </div>
             </div>
@@ -460,7 +464,7 @@ export const Home: React.FC<HomeProps> = ({
                   ))}
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed italic">
-                  "I was blown away by the BaristaTouch espresso machine. Perfectly extracted crema and the dual basket air fryer makes weeknight dinners effortless."
+                  {t('home.testimonial2Quote')}
                 </p>
               </div>
               <div className="flex items-center gap-3 mt-4 pt-4 border-t border-slate-100">
@@ -471,7 +475,7 @@ export const Home: React.FC<HomeProps> = ({
                 />
                 <div>
                   <p className="text-xs font-bold text-slate-900">Karthik Rao</p>
-                  <p className="text-[10px] text-slate-400">Verified Buyer • Bengaluru</p>
+                  <p className="text-[10px] text-slate-400">{t('home.testimonial2Buyer')}</p>
                 </div>
               </div>
             </div>
@@ -484,7 +488,7 @@ export const Home: React.FC<HomeProps> = ({
                   ))}
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed italic">
-                  "Applied code SAVE20 and got $60 off instantly! Tracking updates via BlueDart were transparent all the way to delivery. Highly recommend Inbox Emporium!"
+                  {t('home.testimonial3Quote')}
                 </p>
               </div>
               <div className="flex items-center gap-3 mt-4 pt-4 border-t border-slate-100">
@@ -495,7 +499,7 @@ export const Home: React.FC<HomeProps> = ({
                 />
                 <div>
                   <p className="text-xs font-bold text-slate-900">Meera Patel</p>
-                  <p className="text-[10px] text-slate-400">Verified Buyer • Ahmedabad</p>
+                  <p className="text-[10px] text-slate-400">{t('home.testimonial3Buyer')}</p>
                 </div>
               </div>
             </div>

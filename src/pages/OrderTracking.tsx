@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Order, OrderStatus } from '../types';
 import { orderService } from '../services/orderService';
 import { useToast } from '../context/ToastContext';
+import { useTranslation } from '../context/LanguageContext';
 import {
   CheckCircle2,
   Clock,
@@ -18,13 +19,13 @@ interface OrderTrackingProps {
   onSelectProduct: (id: string) => void;
 }
 
-const STEPS: { status: OrderStatus; label: string; description: string }[] = [
-  { status: 'Order Placed', label: 'Order Placed', description: 'We received your order' },
-  { status: 'Confirmed', label: 'Confirmed', description: 'Payment verified & inventory allocated' },
-  { status: 'Packed', label: 'Packed', description: 'Item securely boxed with quality seal' },
-  { status: 'Shipped', label: 'Shipped', description: 'Handed over to courier express hub' },
-  { status: 'Out for Delivery', label: 'Out for Delivery', description: 'With local driver for final delivery' },
-  { status: 'Delivered', label: 'Delivered', description: 'Package safely delivered' },
+const STEP_DEFINITIONS: { status: OrderStatus; labelKey: string; descKey: string }[] = [
+  { status: 'Order Placed', labelKey: 'tracking.step1Label', descKey: 'tracking.step1Desc' },
+  { status: 'Confirmed', labelKey: 'tracking.step2Label', descKey: 'tracking.step2Desc' },
+  { status: 'Packed', labelKey: 'tracking.step3Label', descKey: 'tracking.step3Desc' },
+  { status: 'Shipped', labelKey: 'tracking.step4Label', descKey: 'tracking.step4Desc' },
+  { status: 'Out for Delivery', labelKey: 'tracking.step5Label', descKey: 'tracking.step5Desc' },
+  { status: 'Delivered', labelKey: 'tracking.step6Label', descKey: 'tracking.step6Desc' },
 ];
 
 export const OrderTracking: React.FC<OrderTrackingProps> = ({
@@ -33,6 +34,7 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({
   onSelectProduct,
 }) => {
   const { showToast } = useToast();
+  const { t, tStatus } = useTranslation();
 
   const [searchId, setSearchId] = useState(initialOrderId || '');
   const [order, setOrder] = useState<Order | null>(null);
@@ -73,7 +75,7 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({
     if (found) {
       setOrder(found);
     } else {
-      showToast(`Order #${searchId} not found`, { type: 'error' });
+      showToast(t('tracking.orderNotFound', { id: searchId }), { type: 'error' });
     }
     setLoading(false);
   };
@@ -95,17 +97,17 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({
       const updated = await orderService.updateOrderStatus(order.id, nextStatus);
       if (updated) {
         setOrder({ ...updated });
-        showToast(`Simulated Progress: ${nextStatus.toUpperCase()}`, {
+        showToast(t('tracking.simulatedSuccess', { status: tStatus(nextStatus).toUpperCase() }), {
           type: 'success',
         });
       }
     } else {
-      showToast('Order is already marked as Delivered!', { type: 'info' });
+      showToast(t('tracking.alreadyDelivered'), { type: 'info' });
     }
   };
 
   const getStepIndex = (status: OrderStatus) => {
-    return STEPS.findIndex((s) => s.status === status);
+    return STEP_DEFINITIONS.findIndex((s) => s.status === status);
   };
 
   const currentStepIndex = order ? getStepIndex(order.status) : 0;
@@ -114,11 +116,11 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 w-full">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 mb-6">
-        <button onClick={() => onNavigate('home')} className="hover:text-slate-700 cursor-pointer">Home</button>
+        <button onClick={() => onNavigate('home')} className="hover:text-slate-700 cursor-pointer">{t('tracking.breadcrumbHome')}</button>
         <ChevronRight className="w-3 h-3" />
-        <button onClick={() => onNavigate('orders')} className="hover:text-slate-700 cursor-pointer">Orders</button>
+        <button onClick={() => onNavigate('orders')} className="hover:text-slate-700 cursor-pointer">{t('tracking.breadcrumbOrders')}</button>
         <ChevronRight className="w-3 h-3" />
-        <span className="text-slate-800">Live Package Tracking</span>
+        <span className="text-slate-800">{t('tracking.breadcrumbTracking')}</span>
       </div>
 
       {/* Lookup Bar */}
@@ -130,7 +132,7 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({
               type="text"
               value={searchId}
               onChange={(e) => setSearchId(e.target.value)}
-              placeholder="Enter Order ID (e.g. INB-82914) or Courier Tracking Code..."
+              placeholder={t('tracking.searchPlaceholder')}
               className="w-full pl-10 pr-4 py-2.5 bg-slate-50 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-orange-500 font-mono"
             />
           </div>
@@ -138,7 +140,7 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({
             type="submit"
             className="w-full sm:w-auto px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition-colors shrink-0 cursor-pointer"
           >
-            Track Parcel
+            {t('tracking.trackButton')}
           </button>
         </form>
       </div>
@@ -150,13 +152,13 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
               <div>
                 <span className="text-xs font-bold text-orange-600 uppercase tracking-wider">
-                  Courier Express: BlueDart Logistics
+                  {t('tracking.carrierNotice', { num: order.trackingNumber || 'BD8839201IN' })}
                 </span>
                 <h1 className="text-2xl font-black text-slate-900 mt-0.5 font-mono">
                   #{order.id}
                 </h1>
                 <p className="text-xs text-slate-500 mt-1">
-                  AWB Tracking Code:{' '}
+                  {t('orderSuccess.trackingNumber')}:{' '}
                   <strong className="text-slate-800 font-mono">{order.trackingNumber || 'BD8839201IN'}</strong>
                 </p>
               </div>
@@ -169,12 +171,12 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({
                   title="Fast forward status for demo"
                 >
                   <FastForward className="w-3.5 h-3.5" />
-                  Simulate Next Stage
+                  {t('tracking.simulateNextStep')}
                 </button>
 
                 <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-200 text-right">
                   <span className="text-[10px] font-bold text-emerald-800 uppercase block">
-                    Expected Arrival
+                    {t('tracking.estimatedDelivery')}
                   </span>
                   <span className="text-xs font-extrabold text-emerald-700">
                     {order.estimatedDeliveryDate || 'Tomorrow by 6:00 PM'}
@@ -186,14 +188,14 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({
             {/* Stepper Timeline */}
             <div className="py-8">
               <div className="grid grid-cols-2 sm:grid-cols-6 gap-4">
-                {STEPS.map((s, idx) => {
+                {STEP_DEFINITIONS.map((s, idx) => {
                   const isDone = currentStepIndex >= idx;
                   const isCurrent = currentStepIndex === idx;
 
                   return (
                     <div key={s.status} className="flex flex-col items-center text-center relative">
                       {/* Connecting line (desktop) */}
-                      {idx < STEPS.length - 1 && (
+                      {idx < STEP_DEFINITIONS.length - 1 && (
                         <div
                           className={`hidden sm:block absolute top-4 left-1/2 w-full h-1 z-0 ${
                             currentStepIndex > idx ? 'bg-orange-500' : 'bg-slate-200'
@@ -217,10 +219,10 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({
                           isCurrent ? 'text-orange-600' : isDone ? 'text-slate-900' : 'text-slate-400'
                         }`}
                       >
-                        {s.label}
+                        {t(s.labelKey)}
                       </span>
                       <span className="text-[10px] text-slate-400 mt-0.5 hidden sm:block">
-                        {s.description}
+                        {t(s.descKey)}
                       </span>
                     </div>
                   );
@@ -232,7 +234,7 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({
             <div className="mt-4 pt-6 border-t border-slate-100">
               <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-1.5">
                 <Clock className="w-4 h-4 text-orange-600" />
-                Live Dispatch & Transit Activity Logs
+                {t('tracking.currentStatus')}
               </h3>
 
               <div className="flex flex-col gap-3">
@@ -244,7 +246,7 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({
                     <div className="flex items-start gap-3">
                       <div className="w-2 h-2 rounded-full bg-orange-600 mt-1.5 shrink-0" />
                       <div>
-                        <p className="font-bold text-slate-900">{sh.status}</p>
+                        <p className="font-bold text-slate-900">{tStatus(sh.status)}</p>
                         <p className="text-[11px] text-slate-500 mt-0.5">{sh.note}</p>
                       </div>
                     </div>
@@ -261,7 +263,7 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({
             <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
               <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3 flex items-center gap-1.5">
                 <MapPin className="w-4 h-4 text-orange-600" />
-                Delivery Address
+                {t('tracking.shippingTo')}
               </h3>
               <p className="text-xs font-bold text-slate-800">{order.customerName}</p>
               <p className="text-xs text-slate-600 mt-1">{order.shippingAddress.street}</p>
@@ -271,7 +273,7 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({
               </p>
               <p className="text-xs text-slate-600">{order.shippingAddress.country}</p>
               {order.customerPhone && (
-                <p className="text-xs text-slate-500 mt-2">Phone: {order.customerPhone}</p>
+                <p className="text-xs text-slate-500 mt-2">{t('checkout.phone')}: {order.customerPhone}</p>
               )}
             </div>
 
@@ -279,7 +281,7 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({
             <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
               <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3 flex items-center gap-1.5">
                 <Package className="w-4 h-4 text-orange-600" />
-                Items In This Shipment ({order.items.length})
+                {t('tracking.itemsInShipment', { count: order.items.length })}
               </h3>
               <div className="flex flex-col gap-2 max-h-36 overflow-y-auto pr-1">
                 {order.items.map((it, idx) => (
@@ -308,7 +310,7 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({
       ) : (
         !loading && (
           <div className="p-12 text-center bg-white rounded-3xl border border-slate-200">
-            <p className="text-xs text-slate-500">Enter an Order ID above to track delivery milestones.</p>
+            <p className="text-xs text-slate-500">{t('tracking.enterValidId')}</p>
           </div>
         )
       )}

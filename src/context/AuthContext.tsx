@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Address } from '../types';
 import { authService, DEMO_USERS } from '../services/authService';
 import { useToast } from './ToastContext';
+import { useTranslation } from './LanguageContext';
 
 interface AuthContextType {
   user: User | null;
@@ -23,6 +24,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(() => authService.getCurrentUser());
   const { showToast } = useToast();
+  const { t, tRole } = useTranslation();
 
   useEffect(() => {
     // Keep user updated
@@ -34,8 +36,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const loggedUser = await authService.login(email, password);
       setUser(loggedUser);
-      showToast(`Welcome back, ${loggedUser.name}!`, {
-        message: loggedUser.role === 'admin' ? 'Logged in with Admin privileges.' : 'Ready to start shopping.',
+      showToast(t('toast.welcomeUser', { name: loggedUser.name }), {
+        message: loggedUser.role === 'admin' ? t('toast.adminPrivileges') : t('toast.readyShopping'),
         type: 'success',
       });
       return loggedUser;
@@ -49,7 +51,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const newUser = await authService.register(name, email, phone);
       setUser(newUser);
-      showToast(`Welcome to Inbox Emporium, ${newUser.name}!`, {
+      showToast(t('toast.welcomeNewUser', { name: newUser.name }), {
         message: 'Your demo account is ready.',
         type: 'success',
       });
@@ -63,13 +65,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     authService.logout();
     setUser(null);
-    showToast('Logged out successfully', { message: 'Come back soon!', type: 'info' });
+    showToast(t('toast.loggedOut'), { message: t('toast.loggedOutDesc'), type: 'info' });
   };
 
   const updateProfile = async (updates: Partial<User>): Promise<User> => {
     const updated = await authService.updateProfile(updates);
     setUser(updated);
-    showToast('Profile updated', { message: 'Your account information has been saved.', type: 'success' });
+    showToast(t('toast.profileUpdated'), { message: t('toast.profileUpdatedDesc'), type: 'success' });
     return updated;
   };
 
@@ -77,7 +79,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const newAddr = await authService.addAddress(addr);
     const refreshed = authService.getCurrentUser();
     setUser(refreshed);
-    showToast('Address added', { message: 'New shipping destination saved.', type: 'success' });
+    showToast(t('toast.addressAdded'), { message: t('toast.addressAddedDesc'), type: 'success' });
     return newAddr;
   };
 
@@ -85,22 +87,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await authService.deleteAddress(id);
     const refreshed = authService.getCurrentUser();
     setUser(refreshed);
-    showToast('Address removed', { type: 'info' });
+    showToast(t('toast.addressRemoved'), { type: 'info' });
   };
 
   const setDefaultAddress = async (id: string): Promise<void> => {
     await authService.setDefaultAddress(id);
     const refreshed = authService.getCurrentUser();
     setUser(refreshed);
-    showToast('Default address updated', { type: 'success' });
+    showToast(t('toast.defaultAddressUpdated'), { type: 'success' });
   };
 
   const switchDemoRole = (role: 'customer' | 'admin') => {
     const targetUser = DEMO_USERS.find((u) => u.role === role) || DEMO_USERS[0];
     localStorage.setItem('inbox_auth_user_v1', JSON.stringify(targetUser));
     setUser(targetUser);
-    showToast(`Switched to Demo ${role === 'admin' ? 'Administrator' : 'Customer'}`, {
-      message: `Active profile: ${targetUser.name} (${targetUser.email})`,
+    showToast(t('toast.roleSwitched', { role: tRole(role) }), {
+      message: t('toast.roleSwitchedDesc', { name: targetUser.name, email: targetUser.email }),
       type: 'info',
     });
   };

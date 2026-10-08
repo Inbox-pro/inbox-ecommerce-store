@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { useTranslation } from '../context/LanguageContext';
 import { Address } from '../types';
 import {
   User as UserIcon,
@@ -24,6 +25,7 @@ interface ProfileProps {
 export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
   const { user, updateProfile, addAddress, deleteAddress, setDefaultAddress, logout, isAdmin } = useAuth();
   const { showToast } = useToast();
+  const { t, tRole } = useTranslation();
 
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(user?.name || '');
@@ -40,12 +42,12 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
   if (!user) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-16 text-center">
-        <h2 className="text-xl font-bold text-slate-800">Please sign in to view your profile</h2>
+        <h2 className="text-xl font-bold text-slate-800">{t('profile.notLoggedInTitle')}</h2>
         <button
           onClick={() => onNavigate('home')}
-          className="mt-4 px-6 py-2.5 bg-[#E84A27] text-white rounded-xl text-xs font-bold"
+          className="mt-4 px-6 py-2.5 bg-[#E84A27] text-white rounded-xl text-xs font-bold cursor-pointer"
         >
-          Return to Home
+          {t('profile.returnHome')}
         </button>
       </div>
     );
@@ -55,13 +57,13 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
     e.preventDefault();
     await updateProfile({ name, phone });
     setIsEditing(false);
-    showToast('Profile updated successfully!', { type: 'success' });
+    showToast(t('toast.profileUpdated'), { type: 'success' });
   };
 
   const handleAddAddressSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!street || !city || !state || !postalCode) {
-      showToast('Please fill all address fields', { type: 'error' });
+      showToast(t('toast.requiredFields'), { type: 'error' });
       return;
     }
     await addAddress({
@@ -80,16 +82,16 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
     setCity('');
     setState('');
     setPostalCode('');
-    showToast('Address added to your address book!', { type: 'success' });
+    showToast(t('toast.addressAdded'), { type: 'success' });
   };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 w-full">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 mb-6">
-        <button onClick={() => onNavigate('home')} className="hover:text-slate-700">Home</button>
+        <button onClick={() => onNavigate('home')} className="hover:text-slate-700 cursor-pointer">{t('profile.breadcrumbHome')}</button>
         <ChevronRight className="w-3 h-3" />
-        <span className="text-slate-800">Account Profile</span>
+        <span className="text-slate-800">{t('profile.breadcrumbProfile')}</span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -105,7 +107,7 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
             <p className="text-xs text-slate-500">{user.email}</p>
             {isAdmin && (
               <span className="inline-block mt-2 px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700 font-bold text-[10px] uppercase">
-                🛡️ Platform Administrator
+                {t('profile.adminPlatformBadge')}
               </span>
             )}
 
@@ -116,7 +118,7 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
               >
                 <div className="flex items-center gap-2.5">
                   <Package className="w-4 h-4 text-orange-600" />
-                  <span>My Orders</span>
+                  <span>{t('profile.myOrders')}</span>
                 </div>
                 <ChevronRight className="w-4 h-4 text-slate-400" />
               </button>
@@ -127,7 +129,7 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
               >
                 <div className="flex items-center gap-2.5">
                   <Heart className="w-4 h-4 text-rose-500" />
-                  <span>Saved Wishlist</span>
+                  <span>{t('profile.savedWishlist')}</span>
                 </div>
                 <ChevronRight className="w-4 h-4 text-slate-400" />
               </button>
@@ -139,7 +141,7 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
                 >
                   <div className="flex items-center gap-2.5">
                     <ShieldCheck className="w-4 h-4 text-blue-600" />
-                    <span>Admin Dashboard</span>
+                    <span>{t('profile.adminControlPortal')}</span>
                   </div>
                   <ChevronRight className="w-4 h-4 text-blue-400" />
                 </button>
@@ -151,7 +153,7 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
               >
                 <div className="flex items-center gap-2.5">
                   <LogOut className="w-4 h-4" />
-                  <span>Sign Out</span>
+                  <span>{t('profile.signOut')}</span>
                 </div>
               </button>
             </div>
@@ -164,14 +166,14 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
               <div>
-                <h3 className="text-base font-bold text-slate-900">Personal Information</h3>
-                <p className="text-xs text-slate-500">Manage your basic profile credentials</p>
+                <h3 className="text-base font-bold text-slate-900">{t('profile.personalInfo')}</h3>
+                <p className="text-xs text-slate-500">{t('profile.accountType')}: {tRole(user.role)}</p>
               </div>
               <button
                 onClick={() => setIsEditing(!isEditing)}
                 className="text-xs font-bold text-orange-600 hover:text-orange-700 cursor-pointer"
               >
-                {isEditing ? 'Cancel' : 'Edit Profile'}
+                {isEditing ? t('profile.cancel') : t('profile.edit')}
               </button>
             </div>
 
@@ -179,7 +181,7 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
               <form onSubmit={handleSaveProfile} className="flex flex-col gap-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-slate-700 block mb-1">Full Name</label>
+                    <label className="text-xs font-semibold text-slate-700 block mb-1">{t('profile.fullName')}</label>
                     <input
                       type="text"
                       value={name}
@@ -188,7 +190,7 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-slate-700 block mb-1">Phone</label>
+                    <label className="text-xs font-semibold text-slate-700 block mb-1">{t('profile.phone')}</label>
                     <input
                       type="tel"
                       value={phone}
@@ -201,22 +203,22 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
                   type="submit"
                   className="w-fit px-5 py-2 bg-[#E84A27] text-white rounded-xl text-xs font-bold cursor-pointer"
                 >
-                  Save Changes
+                  {t('profile.saveChanges')}
                 </button>
               </form>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
                 <div>
-                  <span className="text-slate-400 block mb-0.5">Full Name</span>
+                  <span className="text-slate-400 block mb-0.5">{t('profile.fullName')}</span>
                   <span className="font-bold text-slate-900">{user.name}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block mb-0.5">Email</span>
+                  <span className="text-slate-400 block mb-0.5">{t('profile.email')}</span>
                   <span className="font-bold text-slate-900">{user.email}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block mb-0.5">Phone</span>
-                  <span className="font-bold text-slate-900">{user.phone || 'Not specified'}</span>
+                  <span className="text-slate-400 block mb-0.5">{t('profile.phone')}</span>
+                  <span className="font-bold text-slate-900">{user.phone || '—'}</span>
                 </div>
               </div>
             )}
@@ -226,24 +228,24 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
               <div>
-                <h3 className="text-base font-bold text-slate-900">Address Book</h3>
-                <p className="text-xs text-slate-500">Saved delivery addresses for rapid checkout</p>
+                <h3 className="text-base font-bold text-slate-900">{t('profile.addressBook')}</h3>
+                <p className="text-xs text-slate-500">{t('checkout.shippingGuarantee')}</p>
               </div>
               <button
                 onClick={() => setShowAddressForm(!showAddressForm)}
                 className="px-3 py-1.5 rounded-xl bg-orange-50 text-orange-700 border border-orange-200 text-xs font-bold flex items-center gap-1 cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
-                Add New Address
+                {t('profile.addNewAddress')}
               </button>
             </div>
 
             {/* Add Address Form */}
             {showAddressForm && (
               <form onSubmit={handleAddAddressSubmit} className="p-4 rounded-xl bg-slate-50 border border-slate-200 mb-6 flex flex-col gap-3">
-                <h4 className="text-xs font-bold text-slate-900">New Address Details</h4>
+                <h4 className="text-xs font-bold text-slate-900">{t('profile.newAddressTitle')}</h4>
                 <div>
-                  <label className="text-xs text-slate-600 block mb-1">Street Address</label>
+                  <label className="text-xs text-slate-600 block mb-1">{t('profile.streetAddress')}</label>
                   <input
                     type="text"
                     required
@@ -255,7 +257,7 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <div>
-                    <label className="text-xs text-slate-600 block mb-1">City</label>
+                    <label className="text-xs text-slate-600 block mb-1">{t('profile.city')}</label>
                     <input
                       type="text"
                       required
@@ -265,7 +267,7 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-slate-600 block mb-1">State</label>
+                    <label className="text-xs text-slate-600 block mb-1">{t('profile.state')}</label>
                     <input
                       type="text"
                       required
@@ -275,7 +277,7 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-slate-600 block mb-1">Pincode</label>
+                    <label className="text-xs text-slate-600 block mb-1">{t('profile.pincode')}</label>
                     <input
                       type="text"
                       required
@@ -285,7 +287,7 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-slate-600 block mb-1">Country</label>
+                    <label className="text-xs text-slate-600 block mb-1">{t('profile.country')}</label>
                     <input
                       type="text"
                       required
@@ -300,69 +302,73 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
                     type="submit"
                     className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold cursor-pointer"
                   >
-                    Save Address
+                    {t('profile.saveAddress')}
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowAddressForm(false)}
                     className="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-xs font-bold cursor-pointer"
                   >
-                    Cancel
+                    {t('profile.cancel')}
                   </button>
                 </div>
               </form>
             )}
 
             {/* Saved Addresses List */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {user.addresses.map((addr: Address) => (
-                <div
-                  key={addr.id}
-                  className={`p-4 rounded-2xl border flex flex-col justify-between ${
-                    addr.isDefault
-                      ? 'border-orange-500 bg-orange-50/20'
-                      : 'border-slate-200 bg-white'
-                  }`}
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                        <MapPin className="w-3.5 h-3.5 text-orange-600" />
-                        Delivery Destination
-                      </span>
-                      {addr.isDefault && (
-                        <span className="text-[10px] font-bold text-orange-700 bg-orange-100 px-2 py-0.5 rounded">
-                          Default
+            {user.addresses.length === 0 ? (
+              <p className="text-xs text-slate-400 py-4 text-center">{t('profile.noAddresses')}</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {user.addresses.map((addr: Address) => (
+                  <div
+                    key={addr.id}
+                    className={`p-4 rounded-2xl border flex flex-col justify-between ${
+                      addr.isDefault
+                        ? 'border-orange-500 bg-orange-50/20'
+                        : 'border-slate-200 bg-white'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                          <MapPin className="w-3.5 h-3.5 text-orange-600" />
+                          {t('checkout.step1')}
                         </span>
-                      )}
+                        {addr.isDefault && (
+                          <span className="text-[10px] font-bold text-orange-700 bg-orange-100 px-2 py-0.5 rounded">
+                            {t('profile.defaultBadge')}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-700">{addr.street}</p>
+                      <p className="text-xs text-slate-700">
+                        {addr.city}, {addr.state} - {addr.pincode}
+                      </p>
+                      <p className="text-xs text-slate-500">{addr.country}</p>
                     </div>
-                    <p className="text-xs text-slate-700">{addr.street}</p>
-                    <p className="text-xs text-slate-700">
-                      {addr.city}, {addr.state} - {addr.pincode}
-                    </p>
-                    <p className="text-xs text-slate-500">{addr.country}</p>
-                  </div>
 
-                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                    {!addr.isDefault && (
+                    <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                      {!addr.isDefault && (
+                        <button
+                          onClick={() => setDefaultAddress(addr.id)}
+                          className="text-orange-600 hover:text-orange-700 font-semibold cursor-pointer"
+                        >
+                          {t('profile.setAsDefault')}
+                        </button>
+                      )}
                       <button
-                        onClick={() => setDefaultAddress(addr.id)}
-                        className="text-orange-600 hover:text-orange-700 font-semibold cursor-pointer"
+                        onClick={() => deleteAddress(addr.id)}
+                        className="text-slate-400 hover:text-rose-600 ml-auto cursor-pointer"
+                        title={t('profile.delete')}
                       >
-                        Set as Default
+                        <Trash2 className="w-4 h-4" />
                       </button>
-                    )}
-                    <button
-                      onClick={() => deleteAddress(addr.id)}
-                      className="text-slate-400 hover:text-rose-600 ml-auto cursor-pointer"
-                      title="Delete address"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -3,6 +3,7 @@ import { Product, ProductCategory, FilterState } from '../types';
 import { ProductCard } from '../components/product/ProductCard';
 import { FilterSidebar } from '../components/product/FilterSidebar';
 import { CATEGORIES } from '../components/common/Navbar';
+import { useTranslation } from '../context/LanguageContext';
 import {
   Grid,
   List,
@@ -29,6 +30,7 @@ export const Products: React.FC<ProductsProps> = ({
   onSelectProduct,
   onQuickView,
 }) => {
+  const { t, tCategory } = useTranslation();
   // Mobile filter drawer state
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
 
@@ -179,25 +181,25 @@ export const Products: React.FC<ProductsProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200 mb-6">
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 mb-1">
-            <span>Home</span>
+            <span>{t('catalog.breadcrumbHome')}</span>
             <span>/</span>
-            <span>Catalog</span>
+            <span>{t('catalog.breadcrumbCatalog')}</span>
             {filters.category && (
               <>
                 <span>/</span>
-                <span className="text-[#E84A27]">{filters.category}</span>
+                <span className="text-[#E84A27]">{tCategory(filters.category)}</span>
               </>
             )}
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
             {!filters.category
               ? filters.discountMin > 0
-                ? 'Special Offers & Deals'
-                : 'All Products'
-              : filters.category}
+                ? t('catalog.specialOffers')
+                : t('catalog.allProducts')
+              : tCategory(filters.category)}
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Showing <strong className="text-slate-800">{sortedProducts.length}</strong> items matching your criteria
+            {t('catalog.showingItems', { count: sortedProducts.length })}
           </p>
         </div>
 
@@ -211,7 +213,7 @@ export const Products: React.FC<ProductsProps> = ({
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              placeholder="Search catalog..."
+              placeholder={t('catalog.searchPlaceholder')}
               className="w-full pl-9 pr-8 py-2 text-xs rounded-xl bg-white border border-slate-200 focus:outline-none focus:border-orange-500 shadow-xs"
             />
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3" />
@@ -231,7 +233,7 @@ export const Products: React.FC<ProductsProps> = ({
             className="lg:hidden flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs font-bold shadow-xs hover:bg-slate-50 shrink-0 cursor-pointer"
           >
             <SlidersHorizontal className="w-4 h-4 text-orange-600" />
-            <span>Filters</span>
+            <span>{t('catalog.filtersButton')}</span>
           </button>
         </div>
       </div>
@@ -286,19 +288,19 @@ export const Products: React.FC<ProductsProps> = ({
             {/* Sort Dropdown */}
             <div className="flex items-center gap-2 text-xs">
               <span className="text-slate-400 font-semibold hidden sm:inline flex items-center gap-1">
-                <ArrowUpDown className="w-3.5 h-3.5" /> Sort By:
+                <ArrowUpDown className="w-3.5 h-3.5" /> {t('catalog.sortBy')}
               </span>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as FilterState['sortBy'])}
                 className="bg-slate-50 border border-slate-200 text-slate-700 font-bold rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-orange-500 cursor-pointer"
               >
-                <option value="popularity">Popularity / Best Sellers</option>
-                <option value="price-asc">Price: Low to High</option>
-                <option value="price-desc">Price: High to Low</option>
-                <option value="rating">Highest Customer Rating</option>
-                <option value="discount">Biggest Discount (%)</option>
-                <option value="newest">Newest Releases</option>
+                <option value="popularity">{t('catalog.sortPopularity')}</option>
+                <option value="price-asc">{t('catalog.sortPriceAsc')}</option>
+                <option value="price-desc">{t('catalog.sortPriceDesc')}</option>
+                <option value="rating">{t('catalog.sortRating')}</option>
+                <option value="discount">{t('catalog.sortDiscount')}</option>
+                <option value="newest">{t('catalog.sortNewest')}</option>
               </select>
             </div>
           </div>
@@ -311,11 +313,11 @@ export const Products: React.FC<ProductsProps> = ({
             filters.brand.length > 0 ||
             searchQuery) && (
             <div className="flex flex-wrap items-center gap-2 text-xs">
-              <span className="text-slate-400 font-semibold text-[11px]">Active Filters:</span>
+              <span className="text-slate-400 font-semibold text-[11px]">{t('catalog.activeFilters')}</span>
 
               {searchQuery && (
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-50 text-orange-700 font-semibold text-[11px] border border-orange-200">
-                  Search: "{searchQuery}"
+                  {t('catalog.searchFilter', { query: searchQuery })}
                   <button onClick={() => setSearchQuery('')} className="hover:text-orange-900 cursor-pointer">
                     <X className="w-3 h-3" />
                   </button>
@@ -324,7 +326,7 @@ export const Products: React.FC<ProductsProps> = ({
 
               {filters.category && (
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-800 font-semibold text-[11px] border border-slate-200">
-                  {filters.category}
+                  {tCategory(filters.category)}
                   <button
                     onClick={() => setFilters({ ...filters, category: '' })}
                     className="hover:text-slate-900 cursor-pointer"
@@ -356,7 +358,7 @@ export const Products: React.FC<ProductsProps> = ({
 
               {filters.discountMin > 0 && (
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-50 text-red-700 font-semibold text-[11px] border border-red-200">
-                  Deals &gt;= {filters.discountMin}%
+                  {t('catalog.dealsFilter', { percent: filters.discountMin })}
                   <button
                     onClick={() => setFilters({ ...filters, discountMin: 0 })}
                     className="hover:text-red-900 cursor-pointer"
@@ -370,7 +372,7 @@ export const Products: React.FC<ProductsProps> = ({
                 onClick={handleResetFilters}
                 className="text-[11px] font-bold text-orange-600 hover:text-orange-700 underline ml-2 cursor-pointer"
               >
-                Clear all
+                {t('catalog.clearAll')}
               </button>
             </div>
           )}
@@ -381,15 +383,15 @@ export const Products: React.FC<ProductsProps> = ({
               <div className="w-16 h-16 bg-orange-50 text-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Search className="w-8 h-8" />
               </div>
-              <h3 className="text-base font-bold text-slate-800">No matching products found</h3>
+              <h3 className="text-base font-bold text-slate-800">{t('catalog.noProductsFound')}</h3>
               <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                Try loosening your filters, selecting a different category, or clearing the search query.
+                {t('catalog.noProductsFoundDesc')}
               </p>
               <button
                 onClick={handleResetFilters}
                 className="mt-5 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer"
               >
-                Reset All Filters
+                {t('catalog.resetAllFilters')}
               </button>
             </div>
           ) : viewMode === 'grid' ? (
@@ -422,8 +424,7 @@ export const Products: React.FC<ProductsProps> = ({
           {totalPages > 1 && (
             <div className="flex items-center justify-between border-t border-slate-200 pt-6 mt-4">
               <div className="text-xs text-slate-500">
-                Page <strong className="text-slate-800">{currentPage}</strong> of{' '}
-                <strong className="text-slate-800">{totalPages}</strong>
+                {t('catalog.pageOf', { current: currentPage, total: totalPages })}
               </div>
 
               <div className="flex items-center gap-1.5 text-xs font-bold">
@@ -431,7 +432,7 @@ export const Products: React.FC<ProductsProps> = ({
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   className="p-2 rounded-xl border border-slate-200 text-slate-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 cursor-pointer"
-                  title="Previous Page"
+                  title={t('catalog.previous')}
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
@@ -454,7 +455,7 @@ export const Products: React.FC<ProductsProps> = ({
                   disabled={currentPage === totalPages}
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                   className="p-2 rounded-xl border border-slate-200 text-slate-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 cursor-pointer"
-                  title="Next Page"
+                  title={t('catalog.next')}
                 >
                   <ChevronRight className="w-4 h-4" />
                 </button>
@@ -469,7 +470,7 @@ export const Products: React.FC<ProductsProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm lg:hidden">
           <div className="relative w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-4 border-b border-slate-200 mb-4">
-              <h3 className="text-base font-bold text-slate-900">Filter Products</h3>
+              <h3 className="text-base font-bold text-slate-900">{t('filters.filterProducts')}</h3>
               <button
                 onClick={() => setMobileFilterOpen(false)}
                 className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer"
@@ -494,7 +495,7 @@ export const Products: React.FC<ProductsProps> = ({
               onClick={() => setMobileFilterOpen(false)}
               className="mt-6 w-full py-3 bg-[#E84A27] text-white font-bold rounded-xl text-xs shadow-md cursor-pointer"
             >
-              Apply & Show {sortedProducts.length} Results
+              {t('filters.showResults', { count: sortedProducts.length })}
             </button>
           </div>
         </div>

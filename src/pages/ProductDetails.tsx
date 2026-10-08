@@ -5,6 +5,7 @@ import { ProductCard } from '../components/product/ProductCard';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useToast } from '../context/ToastContext';
+import { useTranslation } from '../context/LanguageContext';
 import { productService } from '../services/productService';
 import {
   ShoppingCart,
@@ -39,6 +40,7 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
   const { addToCart } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();
   const { showToast } = useToast();
+  const { t, tCategory } = useTranslation();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -77,12 +79,12 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
   if (!product) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-20 text-center">
-        <h2 className="text-xl font-bold text-slate-800">Product not found</h2>
+        <h2 className="text-xl font-bold text-slate-800">{t('details.notFound')}</h2>
         <button
           onClick={() => onNavigate('products')}
-          className="mt-4 px-6 py-2.5 bg-[#E84A27] text-white rounded-xl text-xs font-bold"
+          className="mt-4 px-6 py-2.5 bg-[#E84A27] text-white rounded-xl text-xs font-bold cursor-pointer"
         >
-          Back to Catalog
+          {t('details.backToCatalog')}
         </button>
       </div>
     );
@@ -92,7 +94,7 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
 
   const handleAddToCart = () => {
     addToCart(product, quantity, selectedColor, selectedSize);
-    showToast(`Added ${quantity}x "${product.name}" to cart!`, { type: 'success' });
+    showToast(t('toast.addedMultipleToCart', { quantity, name: product.name }), { type: 'success' });
   };
 
   const handleBuyNow = () => {
@@ -103,11 +105,11 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
   const handleCheckPincode = (e: React.FormEvent) => {
     e.preventDefault();
     if (!pincode.trim() || pincode.length < 5) {
-      setPincodeStatus('Please enter a valid 5-6 digit postal code.');
+      setPincodeStatus(t('details.pincodeInvalid'));
       return;
     }
     // Simulate express availability
-    setPincodeStatus('Available! Standard Delivery by tomorrow, 6:00 PM with BlueDart Express.');
+    setPincodeStatus(t('details.pincodeValid'));
   };
 
   const handleSubmitReview = async (e: React.FormEvent) => {
@@ -127,7 +129,7 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
     const updatedReviews = await productService.getReviewsForProduct(product.id);
     setReviews(updatedReviews);
 
-    showToast('Review submitted successfully! Thank you.', { type: 'success' });
+    showToast(t('toast.reviewSubmitted'), { type: 'success' });
     setNewReviewAuthor('');
     setNewReviewComment('');
     setShowReviewForm(false);
@@ -136,7 +138,7 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
   const handleShare = () => {
     if (navigator.clipboard) {
       navigator.clipboard.writeText(window.location.href);
-      showToast('Product link copied to clipboard!', { type: 'info' });
+      showToast(t('details.shareCopied'), { type: 'info' });
     }
   };
 
@@ -149,10 +151,10 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 w-full">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 mb-6 flex-wrap">
-        <button onClick={() => onNavigate('home')} className="hover:text-slate-700">Home</button>
+        <button onClick={() => onNavigate('home')} className="hover:text-slate-700 cursor-pointer">{t('catalog.breadcrumbHome')}</button>
         <ChevronRight className="w-3 h-3" />
-        <button onClick={() => onNavigate('products', product.category)} className="hover:text-slate-700">
-          {product.category}
+        <button onClick={() => onNavigate('products', product.category)} className="hover:text-slate-700 cursor-pointer">
+          {tCategory(product.category)}
         </button>
         <ChevronRight className="w-3 h-3" />
         <span className="text-slate-800 line-clamp-1">{product.name}</span>
@@ -174,7 +176,7 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
             <div className="absolute top-4 left-4 flex flex-col gap-1.5 z-10">
               {product.discount > 0 && (
                 <span className="px-3 py-1 rounded-full bg-[#E84A27] text-white text-xs font-black uppercase shadow-md">
-                  {product.discount}% OFF
+                  {t('product.off', { discount: product.discount })}
                 </span>
               )}
               {product.isBestSeller && (
@@ -188,7 +190,7 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
             <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
               <button
                 onClick={() => toggleWishlist(product)}
-                className={`p-2.5 rounded-full backdrop-blur-md shadow-md transition-all ${
+                className={`p-2.5 rounded-full backdrop-blur-md shadow-md transition-all cursor-pointer ${
                   inWishlist
                     ? 'bg-rose-500 text-white'
                     : 'bg-white/90 text-slate-600 hover:text-rose-500 hover:bg-white'
@@ -200,8 +202,8 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
 
               <button
                 onClick={handleShare}
-                className="p-2.5 rounded-full bg-white/90 text-slate-600 hover:text-slate-900 hover:bg-white backdrop-blur-md shadow-md transition-all"
-                title="Share link"
+                className="p-2.5 rounded-full bg-white/90 text-slate-600 hover:text-slate-900 hover:bg-white backdrop-blur-md shadow-md transition-all cursor-pointer"
+                title={t('details.share')}
               >
                 <Share2 className="w-4 h-4" />
               </button>
@@ -243,7 +245,7 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
                     : 'bg-rose-50 text-rose-700 border border-rose-200'
                 }`}
               >
-                {product.stock > 0 ? `In Stock (${product.stock} units)` : 'Out of Stock'}
+                {product.stock > 0 ? t('product.inStock', { count: product.stock }) : t('product.outOfStock')}
               </span>
             </div>
 
@@ -259,11 +261,11 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
                 <span className="text-xs font-black text-amber-900">{product.rating}</span>
               </div>
               <span className="text-xs text-slate-500">
-                ({product.reviewCount} customer reviews)
+                ({t('details.basedOnReviews', { count: product.reviewCount })})
               </span>
               <span className="text-slate-300">•</span>
               <span className="text-xs text-emerald-600 font-semibold flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5" /> 100% Genuine
+                <ShieldCheck className="w-3.5 h-3.5" /> {t('product.hundredGenuine')}
               </span>
             </div>
 
@@ -278,7 +280,7 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
                     ${product.originalPrice.toFixed(2)}
                   </span>
                   <span className="text-xs font-extrabold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-md">
-                    Save ${(product.originalPrice - product.price).toFixed(2)} ({product.discount}%)
+                    {t('product.save', { amount: (product.originalPrice - product.price).toFixed(2) })} ({product.discount}%)
                   </span>
                 </>
               )}
@@ -293,7 +295,7 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
             {product.colors && product.colors.length > 0 && (
               <div className="pt-2">
                 <label className="text-xs font-bold text-slate-800 block mb-2">
-                  Select Color: <span className="text-orange-600 font-medium">{selectedColor}</span>
+                  {t('product.color')} <span className="text-orange-600 font-medium">{selectedColor}</span>
                 </label>
                 <div className="flex items-center gap-2">
                   {product.colors.map((c: string) => (
@@ -317,7 +319,7 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
             {product.sizes && product.sizes.length > 0 && (
               <div className="pt-2">
                 <label className="text-xs font-bold text-slate-800 block mb-2">
-                  Select Size: <span className="text-orange-600 font-medium">{selectedSize}</span>
+                  {t('product.size')} <span className="text-orange-600 font-medium">{selectedSize}</span>
                 </label>
                 <div className="flex items-center gap-2">
                   {product.sizes.map((s: string) => (
@@ -367,7 +369,7 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
                 className="flex-1 py-3 px-5 rounded-xl bg-[#E84A27] hover:bg-[#d63f1f] text-white font-extrabold text-xs shadow-md active:scale-98 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 <ShoppingCart className="w-4 h-4" />
-                <span>Add to Cart</span>
+                <span>{t('product.addToCart')}</span>
               </button>
 
               {/* Buy Now */}
@@ -376,7 +378,7 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
                 onClick={handleBuyNow}
                 className="py-3 px-5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs shadow-md active:scale-98 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
-                <span>Buy Now</span>
+                <span>{t('details.buyNow')}</span>
               </button>
             </div>
 
@@ -384,21 +386,21 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
             <div className="mt-4 pt-4 border-t border-slate-100">
               <label className="text-xs font-bold text-slate-700 block mb-1.5 flex items-center gap-1.5">
                 <MapPin className="w-3.5 h-3.5 text-orange-600" />
-                Delivery Availability Check
+                {t('details.deliveryAvailability')}
               </label>
               <form onSubmit={handleCheckPincode} className="flex gap-2">
                 <input
                   type="text"
                   value={pincode}
                   onChange={(e) => setPincode(e.target.value)}
-                  placeholder="Enter postal pincode (e.g. 110001)"
+                  placeholder={t('details.pincodePlaceholder')}
                   className="flex-1 px-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-orange-500"
                 />
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-slate-900 text-white text-xs font-bold rounded-xl hover:bg-slate-800 transition-colors"
+                  className="px-4 py-2 bg-slate-900 text-white text-xs font-bold rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
                 >
-                  Check
+                  {t('details.checkButton')}
                 </button>
               </form>
               {pincodeStatus && (
@@ -412,18 +414,18 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
             <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-slate-100 text-center">
               <div className="flex flex-col items-center">
                 <Truck className="w-4 h-4 text-orange-600 mb-1" />
-                <span className="text-[10px] font-bold text-slate-700">Free Shipping</span>
-                <span className="text-[9px] text-slate-400">On all orders &gt; $50</span>
+                <span className="text-[10px] font-bold text-slate-700">{t('product.freeShippingNotice')}</span>
+                <span className="text-[9px] text-slate-400">{t('details.freeDeliveryOver')}</span>
               </div>
               <div className="flex flex-col items-center">
                 <RotateCcw className="w-4 h-4 text-orange-600 mb-1" />
-                <span className="text-[10px] font-bold text-slate-700">30-Day Returns</span>
-                <span className="text-[9px] text-slate-400">Instant full refund</span>
+                <span className="text-[10px] font-bold text-slate-700">{t('product.sevenDayReturn')}</span>
+                <span className="text-[9px] text-slate-400">{t('footer.easyReturnsSub')}</span>
               </div>
               <div className="flex flex-col items-center">
                 <Award className="w-4 h-4 text-orange-600 mb-1" />
-                <span className="text-[10px] font-bold text-slate-700">1-Yr Warranty</span>
-                <span className="text-[9px] text-slate-400">Brand supported</span>
+                <span className="text-[10px] font-bold text-slate-700">{t('product.hundredGenuine')}</span>
+                <span className="text-[9px] text-slate-400">{t('footer.genuineBrandsSub')}</span>
               </div>
             </div>
           </div>
@@ -442,7 +444,7 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
                 : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            Product Overview
+            {t('details.tabDesc')}
             {activeTab === 'desc' && (
               <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#E84A27]" />
             )}
@@ -456,7 +458,7 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
                 : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            Specifications
+            {t('details.tabSpecs')}
             {activeTab === 'specs' && (
               <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#E84A27]" />
             )}
@@ -470,7 +472,7 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
                 : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            Customer Reviews ({reviews.length})
+            {t('details.tabReviews', { count: reviews.length })}
             {activeTab === 'reviews' && (
               <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#E84A27]" />
             )}
@@ -481,15 +483,12 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
         <div className="pt-6 text-xs sm:text-sm text-slate-700">
           {activeTab === 'desc' && (
             <div className="flex flex-col gap-4 max-w-3xl leading-relaxed">
+              <h3 className="text-base font-bold text-slate-900">{t('details.aboutItem')}</h3>
               <p>{product.description}</p>
-              <p>
-                Engineered with highest standards by <strong>{product.brand}</strong>, this unit
-                undergoes rigorous automated quality assurance tests before dispatch.
-              </p>
               <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center gap-3">
                 <Award className="w-5 h-5 text-orange-600 shrink-0" />
                 <span className="text-xs text-slate-600">
-                  Includes full manufacturer box accessories, original warranty paperwork, and quick-start user guide.
+                  {t('details.aboutItem')} — {product.brand}
                 </span>
               </div>
             </div>
@@ -497,6 +496,7 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
 
           {activeTab === 'specs' && (
             <div className="max-w-2xl">
+              <h3 className="text-base font-bold text-slate-900 mb-4">{t('details.technicalSpecs')}</h3>
               {product.specifications && Object.keys(product.specifications).length > 0 ? (
                 <div className="divide-y divide-slate-100 border border-slate-200 rounded-2xl overflow-hidden">
                   {Object.entries(product.specifications).map(([key, val], idx) => (
@@ -523,17 +523,17 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
                 <div>
                   <h3 className="text-base font-bold text-slate-900">
-                    Average Rating: {product.rating} / 5.0
+                    {t('details.customerFeedback')}
                   </h3>
                   <p className="text-xs text-slate-400">
-                    Based on {reviews.length} verified reviews
+                    {t('details.basedOnReviews', { count: reviews.length })}
                   </p>
                 </div>
                 <button
                   onClick={() => setShowReviewForm(!showReviewForm)}
                   className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-colors self-start sm:self-auto cursor-pointer"
                 >
-                  {showReviewForm ? 'Cancel Review' : 'Write a Review'}
+                  {showReviewForm ? t('admin.cancel') : t('details.writeReview')}
                 </button>
               </div>
 
@@ -544,11 +544,11 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
                   className="p-5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col gap-3"
                 >
                   <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                    Submit Your Review
+                    {t('details.writeReview')}
                   </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs text-slate-600 block mb-1">Your Name</label>
+                      <label className="text-xs text-slate-600 block mb-1">{t('details.yourName')}</label>
                       <input
                         type="text"
                         required
@@ -559,7 +559,7 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-slate-600 block mb-1">Rating (1 to 5)</label>
+                      <label className="text-xs text-slate-600 block mb-1">{t('details.yourRating')}</label>
                       <select
                         value={newReviewRating}
                         onChange={(e) => setNewReviewRating(Number(e.target.value))}
@@ -574,13 +574,13 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
                     </div>
                   </div>
                   <div>
-                    <label className="text-xs text-slate-600 block mb-1">Your Feedback</label>
+                    <label className="text-xs text-slate-600 block mb-1">{t('details.yourReview')}</label>
                     <textarea
                       rows={3}
                       required
                       value={newReviewComment}
                       onChange={(e) => setNewReviewComment(e.target.value)}
-                      placeholder="Share your experience with this item..."
+                      placeholder={t('details.reviewPlaceholder')}
                       className="w-full px-3 py-2 text-xs rounded-xl bg-white border border-slate-200 focus:outline-none focus:border-orange-500"
                     />
                   </div>
@@ -588,7 +588,7 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
                     type="submit"
                     className="w-fit px-5 py-2 rounded-xl bg-[#E84A27] text-white text-xs font-bold shadow-xs hover:bg-[#d43f1f] cursor-pointer"
                   >
-                    Post Review
+                    {t('details.submitReview')}
                   </button>
                 </form>
               )}
@@ -624,7 +624,7 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
                   ))
                 ) : (
                   <p className="text-xs text-slate-400">
-                    No reviews yet. Be the first to share your thoughts!
+                    {t('details.noReviewsYet')}
                   </p>
                 )}
               </div>
@@ -639,17 +639,17 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
           <div className="flex items-center justify-between mb-6">
             <div>
               <span className="text-xs font-bold text-orange-600 uppercase tracking-wider">
-                Explore More In {product.category}
+                {t('details.relatedProducts', { category: tCategory(product.category) })}
               </span>
               <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mt-0.5">
-                Related Recommendations
+                {t('details.relatedProducts', { category: tCategory(product.category) })}
               </h2>
             </div>
             <button
               onClick={() => onNavigate('products', product.category)}
-              className="text-xs font-bold text-orange-600 hover:text-orange-700"
+              className="text-xs font-bold text-orange-600 hover:text-orange-700 cursor-pointer"
             >
-              View More →
+              {t('home.viewMore')}
             </button>
           </div>
 

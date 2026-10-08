@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useTranslation } from '../../context/LanguageContext';
 import { BrandLogo } from '../common/BrandLogo';
 import { X, Eye, EyeOff, KeyRound, Mail, User as UserIcon, Phone, CheckCircle2, ArrowRight } from 'lucide-react';
 
@@ -15,6 +16,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   initialMode = 'login',
 }) => {
   const { login, register } = useAuth();
+  const { t } = useTranslation();
 
   const [mode, setMode] = useState<'login' | 'register' | 'forgot'>(initialMode);
   const [showPassword, setShowPassword] = useState(false);
@@ -85,7 +87,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors z-10"
+          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors z-10 cursor-pointer"
           aria-label="Close"
         >
           <X className="w-5 h-5" />
@@ -97,14 +99,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <BrandLogo size="md" />
           </div>
           <h2 className="text-xl font-bold text-slate-900">
-            {mode === 'login' && 'Welcome Back'}
-            {mode === 'register' && 'Create Your Account'}
-            {mode === 'forgot' && 'Reset Password'}
+            {mode === 'login' && t('auth.welcomeBack')}
+            {mode === 'register' && t('auth.createAccount')}
+            {mode === 'forgot' && t('auth.resetPassword')}
           </h2>
           <p className="text-xs text-slate-500 mt-1">
-            {mode === 'login' && 'Sign in to access your orders, wishlist & profile'}
-            {mode === 'register' && 'Join Inbox Emporium for exclusive offers and fast checkout'}
-            {mode === 'forgot' && 'Enter your registered email for password recovery'}
+            {mode === 'login' && t('auth.loginDesc')}
+            {mode === 'register' && t('auth.registerDesc')}
+            {mode === 'forgot' && t('auth.forgotDesc')}
           </p>
 
           {/* Quick Demo Autofill Bar for college presentation */}
@@ -112,22 +114,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <div className="mt-4 p-2.5 bg-orange-50/80 border border-orange-200/80 rounded-xl text-left">
               <span className="text-[11px] font-bold text-orange-800 uppercase tracking-wider block mb-1.5 flex items-center gap-1">
                 <KeyRound className="w-3.5 h-3.5 text-orange-600" />
-                Presentation Demo Shortcuts:
+                {t('auth.demoShortcuts')}
               </span>
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={handleFillDemoUser}
-                  className="flex-1 text-xs py-1 px-2.5 bg-white hover:bg-orange-100 text-slate-800 rounded-lg border border-orange-200 font-semibold transition-colors"
+                  className="flex-1 text-xs py-1 px-2.5 bg-white hover:bg-orange-100 text-slate-800 rounded-lg border border-orange-200 font-semibold transition-colors cursor-pointer"
                 >
-                  Fill Customer Demo
+                  {t('auth.fillCustomerDemo')}
                 </button>
                 <button
                   type="button"
                   onClick={handleFillDemoAdmin}
-                  className="flex-1 text-xs py-1 px-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg font-semibold transition-colors"
+                  className="flex-1 text-xs py-1 px-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg font-semibold transition-colors cursor-pointer"
                 >
-                  Fill Admin Demo
+                  {t('auth.fillAdminDemo')}
                 </button>
               </div>
             </div>
@@ -147,18 +149,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-3">
                 <CheckCircle2 className="w-6 h-6" />
               </div>
-              <h3 className="text-base font-bold text-slate-900">Recovery Email Sent!</h3>
+              <h3 className="text-base font-bold text-slate-900">{t('auth.recoverySentTitle')}</h3>
               <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
-                We've sent password reset instructions to <strong>{email}</strong> (Demo simulation).
+                {t('auth.recoverySentDesc', { email })}
               </p>
               <button
                 onClick={() => {
                   setForgotSuccess(false);
                   setMode('login');
                 }}
-                className="mt-5 w-full py-2.5 bg-slate-900 text-white rounded-xl font-bold text-xs"
+                className="mt-5 w-full py-2.5 bg-slate-900 text-white rounded-xl font-bold text-xs cursor-pointer"
               >
-                Back to Login
+                {t('auth.backToLogin')}
               </button>
             </div>
           ) : (
@@ -166,7 +168,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               {mode === 'register' && (
                 <>
                   <div>
-                    <label className="text-xs font-semibold text-slate-700 block mb-1">Full Name</label>
+                    <label className="text-xs font-semibold text-slate-700 block mb-1">{t('auth.fullName')}</label>
                     <div className="relative">
                       <UserIcon className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                       <input
@@ -181,7 +183,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-slate-700 block mb-1">Phone Number</label>
+                    <label className="text-xs font-semibold text-slate-700 block mb-1">{t('auth.phoneNumber')}</label>
                     <div className="relative">
                       <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                       <input
@@ -198,7 +200,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               )}
 
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">Email Address</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">{t('auth.emailAddress')}</label>
                 <div className="relative">
                   <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                   <input
@@ -215,7 +217,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               {mode !== 'forgot' && (
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="text-xs font-semibold text-slate-700">Password</label>
+                    <label className="text-xs font-semibold text-slate-700">{t('auth.password')}</label>
                     {mode === 'login' && (
                       <button
                         type="button"
@@ -223,9 +225,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           setErrorMsg('');
                           setMode('forgot');
                         }}
-                        className="text-xs text-orange-600 hover:text-orange-700 font-medium"
+                        className="text-xs text-orange-600 hover:text-orange-700 font-medium cursor-pointer"
                       >
-                        Forgot Password?
+                        {t('auth.forgotPassword')}
                       </button>
                     )}
                   </div>
@@ -241,7 +243,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
+                      className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 cursor-pointer"
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -258,7 +260,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       onChange={(e) => setRememberMe(e.target.checked)}
                       className="rounded text-orange-600 border-slate-300 focus:ring-orange-500"
                     />
-                    <span>Remember me</span>
+                    <span>{t('auth.rememberMe')}</span>
                   </label>
                 </div>
               )}
@@ -266,16 +268,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full mt-2 py-3 px-4 bg-[#E84A27] hover:bg-[#d63f1f] text-white font-bold rounded-xl shadow-md shadow-orange-500/20 active:scale-[0.99] transition-all flex items-center justify-center gap-2 text-sm disabled:opacity-50"
+                className="w-full mt-2 py-3 px-4 bg-[#E84A27] hover:bg-[#d63f1f] text-white font-bold rounded-xl shadow-md shadow-orange-500/20 active:scale-[0.99] transition-all flex items-center justify-center gap-2 text-sm disabled:opacity-50 cursor-pointer"
               >
                 {loading ? (
                   <span className="inline-block animate-spin">⟳</span>
                 ) : (
                   <>
                     <span>
-                      {mode === 'login' && 'Sign In'}
-                      {mode === 'register' && 'Complete Registration'}
-                      {mode === 'forgot' && 'Send Reset Link'}
+                      {mode === 'login' && t('auth.signInBtn')}
+                      {mode === 'register' && t('auth.registerBtn')}
+                      {mode === 'forgot' && t('auth.sendResetBtn')}
                     </span>
                     <ArrowRight className="w-4 h-4" />
                   </>
@@ -288,30 +290,30 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           <div className="mt-5 text-center text-xs text-slate-500 pt-4 border-t border-slate-100">
             {mode === 'login' ? (
               <p>
-                Don't have an account?{' '}
+                {t('auth.noAccount')}{' '}
                 <button
                   type="button"
                   onClick={() => {
                     setErrorMsg('');
                     setMode('register');
                   }}
-                  className="font-bold text-orange-600 hover:text-orange-700"
+                  className="font-bold text-orange-600 hover:text-orange-700 cursor-pointer"
                 >
-                  Create one now
+                  {t('auth.createOne')}
                 </button>
               </p>
             ) : (
               <p>
-                Already have an account?{' '}
+                {t('auth.alreadyHaveAccount')}{' '}
                 <button
                   type="button"
                   onClick={() => {
                     setErrorMsg('');
                     setMode('login');
                   }}
-                  className="font-bold text-orange-600 hover:text-orange-700"
+                  className="font-bold text-orange-600 hover:text-orange-700 cursor-pointer"
                 >
-                  Sign In
+                  {t('auth.signInLink')}
                 </button>
               </p>
             )}

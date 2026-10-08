@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Product } from '../types';
 import { useToast } from './ToastContext';
 import { useCart } from './CartContext';
+import { useTranslation } from './LanguageContext';
 
 const WISHLIST_STORAGE_KEY = 'inbox_wishlist_items_v1';
 
@@ -21,6 +22,7 @@ const WishlistContext = createContext<WishlistContextType | undefined>(undefined
 export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { showToast } = useToast();
   const { addToCart } = useCart();
+  const { t } = useTranslation();
 
   const [wishlist, setWishlist] = useState<Product[]>(() => {
     try {
@@ -42,14 +44,14 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setWishlist((prev) => {
       const exists = prev.some((item) => item.id === product.id);
       if (exists) {
-        showToast('Removed from wishlist', {
-          message: `${product.name} was removed.`,
+        showToast(t('toast.removedFromWishlist'), {
+          message: t('toast.removedFromWishlistDesc', { name: product.name }),
           type: 'info',
         });
         return prev.filter((item) => item.id !== product.id);
       } else {
-        showToast('Saved to wishlist', {
-          message: `${product.name} is in your saved list.`,
+        showToast(t('toast.savedToWishlist'), {
+          message: t('toast.savedToWishlistDesc', { name: product.name }),
           type: 'success',
         });
         return [...prev, product];
@@ -59,7 +61,7 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const removeFromWishlist = (productId: string) => {
     setWishlist((prev) => prev.filter((item) => item.id !== productId));
-    showToast('Removed from wishlist', { type: 'info' });
+    showToast(t('toast.removedFromWishlist'), { type: 'info' });
   };
 
   const moveToCart = (product: Product) => {
@@ -72,12 +74,12 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       addToCart(item);
     });
     setWishlist([]);
-    showToast('All items moved to cart', { type: 'success' });
+    showToast(t('toast.allMovedToCart'), { type: 'success' });
   };
 
   const clearWishlist = () => {
     setWishlist([]);
-    showToast('Wishlist cleared', { type: 'info' });
+    showToast(t('toast.wishlistCleared'), { type: 'info' });
   };
 
   return (

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { useTranslation } from '../context/LanguageContext';
 import { orderService } from '../services/orderService';
 import { Order, PaymentMethod, CartItem, Address, OrderItem } from '../types';
 import confetti from 'canvas-confetti';
@@ -32,6 +33,7 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate, onOrderPlaced })
   const { items, subtotal, discount, shipping, tax, total, clearCart } = useCart();
   const { user, defaultAddress } = useAuth();
   const { showToast } = useToast();
+  const { t } = useTranslation();
 
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('address');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -71,13 +73,13 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate, onOrderPlaced })
   if (items.length === 0 && !isProcessing) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-20 text-center">
-        <h2 className="text-xl font-bold text-slate-800">Your cart is empty</h2>
-        <p className="text-xs text-slate-500 mt-1">Add items to your cart before proceeding to checkout.</p>
+        <h2 className="text-xl font-bold text-slate-800">{t('checkout.emptyTitle')}</h2>
+        <p className="text-xs text-slate-500 mt-1">{t('checkout.emptyDesc')}</p>
         <button
           onClick={() => onNavigate('products')}
-          className="mt-4 px-6 py-2.5 bg-[#E84A27] text-white rounded-xl text-xs font-bold"
+          className="mt-4 px-6 py-2.5 bg-[#E84A27] text-white rounded-xl text-xs font-bold cursor-pointer"
         >
-          Browse Products
+          {t('checkout.browseProducts')}
         </button>
       </div>
     );
@@ -87,7 +89,7 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate, onOrderPlaced })
   const handleAddressSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName || !email || !street || !city || !postalCode) {
-      showToast('Please complete all required shipping fields', { type: 'error' });
+      showToast(t('toast.requiredFields'), { type: 'error' });
       return;
     }
     setCurrentStep('shipping');
@@ -167,7 +169,7 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate, onOrderPlaced })
         // Safe fallback if canvas not available
       }
 
-      showToast('🎉 Payment Confirmed! Your order has been placed.', { type: 'success' });
+      showToast(t('orderSuccess.confirmedBadge'), { type: 'success' });
       clearCart();
       onOrderPlaced(newOrder);
       onNavigate('order-success', newOrder.id);
@@ -185,11 +187,11 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate, onOrderPlaced })
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 w-full">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 mb-6">
-        <button onClick={() => onNavigate('home')} className="hover:text-slate-700">Home</button>
+        <button onClick={() => onNavigate('home')} className="hover:text-slate-700 cursor-pointer">{t('cart.breadcrumbHome')}</button>
         <ChevronRight className="w-3 h-3" />
-        <button onClick={() => onNavigate('cart')} className="hover:text-slate-700">Cart</button>
+        <button onClick={() => onNavigate('cart')} className="hover:text-slate-700 cursor-pointer">{t('cart.breadcrumbCart')}</button>
         <ChevronRight className="w-3 h-3" />
-        <span className="text-slate-800">Checkout</span>
+        <span className="text-slate-800">{t('checkout.title')}</span>
       </div>
 
       {/* Stepper Progress Header */}
@@ -213,7 +215,7 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate, onOrderPlaced })
                 currentStep === 'address' ? 'text-orange-600' : 'text-slate-700'
               }`}
             >
-              Shipping Address
+              {t('checkout.step1')}
             </span>
           </div>
 
@@ -235,7 +237,7 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate, onOrderPlaced })
                 currentStep === 'shipping' ? 'text-orange-600' : 'text-slate-500'
               }`}
             >
-              Delivery Speed
+              {t('checkout.step2')}
             </span>
           </div>
 
@@ -255,7 +257,7 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate, onOrderPlaced })
                 currentStep === 'payment' ? 'text-orange-600' : 'text-slate-500'
               }`}
             >
-              Payment & Confirm
+              {t('checkout.step3')}
             </span>
           </div>
         </div>
@@ -270,13 +272,13 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate, onOrderPlaced })
             <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs">
               <div className="flex items-center gap-2 mb-6">
                 <MapPin className="w-5 h-5 text-orange-600" />
-                <h2 className="text-lg font-bold text-slate-900">Delivery Address Details</h2>
+                <h2 className="text-lg font-bold text-slate-900">{t('checkout.shippingHeading')}</h2>
               </div>
 
               <form onSubmit={handleAddressSubmit} className="flex flex-col gap-4 text-xs">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="font-bold text-slate-700 block mb-1">Full Recipient Name *</label>
+                    <label className="font-bold text-slate-700 block mb-1">{t('checkout.fullName')} *</label>
                     <input
                       type="text"
                       required
@@ -288,7 +290,7 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate, onOrderPlaced })
                   </div>
 
                   <div>
-                    <label className="font-bold text-slate-700 block mb-1">Email (for order updates) *</label>
+                    <label className="font-bold text-slate-700 block mb-1">{t('checkout.email')} *</label>
                     <input
                       type="email"
                       required
@@ -301,7 +303,7 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate, onOrderPlaced })
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Mobile Phone Number *</label>
+                  <label className="font-bold text-slate-700 block mb-1">{t('checkout.phone')} *</label>
                   <input
                     type="tel"
                     required
@@ -313,7 +315,7 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate, onOrderPlaced })
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Street Address, Flat / Apartment *</label>
+                  <label className="font-bold text-slate-700 block mb-1">{t('checkout.street')} *</label>
                   <input
                     type="text"
                     required
@@ -326,7 +328,7 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate, onOrderPlaced })
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <div>
-                    <label className="font-bold text-slate-700 block mb-1">City *</label>
+                    <label className="font-bold text-slate-700 block mb-1">{t('checkout.city')} *</label>
                     <input
                       type="text"
                       required
@@ -336,7 +338,7 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate, onOrderPlaced })
                     />
                   </div>
                   <div>
-                    <label className="font-bold text-slate-700 block mb-1">State *</label>
+                    <label className="font-bold text-slate-700 block mb-1">{t('checkout.state')} *</label>
                     <input
                       type="text"
                       required
@@ -346,7 +348,7 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate, onOrderPlaced })
                     />
                   </div>
                   <div>
-                    <label className="font-bold text-slate-700 block mb-1">Postal Pincode *</label>
+                    <label className="font-bold text-slate-700 block mb-1">{t('checkout.postalCode')} *</label>
                     <input
                       type="text"
                       required
@@ -356,7 +358,7 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate, onOrderPlaced })
                     />
                   </div>
                   <div>
-                    <label className="font-bold text-slate-700 block mb-1">Country *</label>
+                    <label className="font-bold text-slate-700 block mb-1">{t('checkout.country')} *</label>
                     <input
                       type="text"
                       required
@@ -371,7 +373,7 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate, onOrderPlaced })
                   type="submit"
                   className="mt-4 py-3 px-6 bg-[#E84A27] hover:bg-[#d63f1f] text-white font-extrabold rounded-xl shadow-md flex items-center justify-center gap-2 self-end cursor-pointer"
                 >
-                  <span>Continue to Shipping Method</span>
+                  <span>{t('checkout.continueShipping')}</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </form>
@@ -383,7 +385,7 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate, onOrderPlaced })
             <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs">
               <div className="flex items-center gap-2 mb-6">
                 <Truck className="w-5 h-5 text-orange-600" />
-                <h2 className="text-lg font-bold text-slate-900">Choose Shipping Speed</h2>
+                <h2 className="text-lg font-bold text-slate-900">{t('checkout.deliveryHeading')}</h2>
               </div>
 
               <form onSubmit={handleShippingSubmit} className="flex flex-col gap-4">
@@ -404,12 +406,12 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate, onOrderPlaced })
                       className="text-orange-600 focus:ring-orange-500"
                     />
                     <div>
-                      <p className="text-xs font-bold text-slate-900">Standard Delivery (3-5 Business Days)</p>
-                      <p className="text-[11px] text-slate-500">Delivered via BlueDart / Delhivery Surface</p>
+                      <p className="text-xs font-bold text-slate-900">{t('checkout.standardTitle')}</p>
+                      <p className="text-[11px] text-slate-500">{t('checkout.standardSub')}</p>
                     </div>
                   </div>
                   <span className="text-xs font-extrabold text-emerald-600">
-                    {shipping === 0 ? 'FREE' : `$${shipping.toFixed(2)}`}
+                    {shipping === 0 ? t('cart.free') : `$${shipping.toFixed(2)}`}
                   </span>
                 </label>
 
@@ -431,12 +433,12 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate, onOrderPlaced })
                     />
                     <div>
                       <p className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                        <span>Express Air Delivery (Next Day Priority)</span>
+                        <span>{t('checkout.expressTitle')}</span>
                         <span className="bg-orange-100 text-orange-700 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
                           FASTEST
                         </span>
                       </p>
-                      <p className="text-[11px] text-slate-500">Guaranteed arrival by tomorrow 2:00 PM</p>
+                      <p className="text-[11px] text-slate-500">{t('checkout.expressSub')}</p>
                     </div>
                   </div>
                   <span className="text-xs font-extrabold text-slate-900">+$9.99</span>
@@ -446,15 +448,15 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate, onOrderPlaced })
                   <button
                     type="button"
                     onClick={() => setCurrentStep('address')}
-                    className="text-xs font-bold text-slate-500 hover:text-slate-800"
+                    className="text-xs font-bold text-slate-500 hover:text-slate-800 cursor-pointer"
                   >
-                    ← Edit Address
+                    ← {t('checkout.back')}
                   </button>
                   <button
                     type="submit"
                     className="py-3 px-6 bg-[#E84A27] hover:bg-[#d63f1f] text-white font-extrabold rounded-xl shadow-md flex items-center gap-2 cursor-pointer"
                   >
-                    <span>Proceed to Payment</span>
+                    <span>{t('checkout.continuePayment')}</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
@@ -468,7 +470,7 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate, onOrderPlaced })
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2">
                   <Lock className="w-5 h-5 text-emerald-600" />
-                  <h2 className="text-lg font-bold text-slate-900">Secure Payment Simulation</h2>
+                  <h2 className="text-lg font-bold text-slate-900">{t('checkout.paymentHeading')}</h2>
                 </div>
                 <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
                   Demo Sandbox Mode
@@ -480,53 +482,53 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate, onOrderPlaced })
                 <button
                   type="button"
                   onClick={() => setPaymentMethod('card')}
-                  className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all text-xs font-bold ${
+                  className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all text-xs font-bold cursor-pointer ${
                     paymentMethod === 'card'
                       ? 'border-orange-500 bg-orange-50 text-orange-700 shadow-xs'
                       : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
                   }`}
                 >
                   <CreditCard className="w-4 h-4" />
-                  <span>Credit/Debit Card</span>
+                  <span>{t('checkout.cardTitle')}</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setPaymentMethod('upi')}
-                  className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all text-xs font-bold ${
+                  className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all text-xs font-bold cursor-pointer ${
                     paymentMethod === 'upi'
                       ? 'border-orange-500 bg-orange-50 text-orange-700 shadow-xs'
                       : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
                   }`}
                 >
                   <QrCode className="w-4 h-4" />
-                  <span>UPI / QR Scan</span>
+                  <span>{t('checkout.upiTitle')}</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setPaymentMethod('netbanking')}
-                  className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all text-xs font-bold ${
+                  className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all text-xs font-bold cursor-pointer ${
                     paymentMethod === 'netbanking'
                       ? 'border-orange-500 bg-orange-50 text-orange-700 shadow-xs'
                       : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
                   }`}
                 >
                   <Building2 className="w-4 h-4" />
-                  <span>Net Banking</span>
+                  <span>{t('checkout.netbankingTitle')}</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setPaymentMethod('cod')}
-                  className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all text-xs font-bold ${
+                  className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all text-xs font-bold cursor-pointer ${
                     paymentMethod === 'cod'
                       ? 'border-orange-500 bg-orange-50 text-orange-700 shadow-xs'
                       : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
                   }`}
                 >
                   <Banknote className="w-4 h-4" />
-                  <span>Cash on Delivery</span>
+                  <span>{t('checkout.codTitle')}</span>
                 </button>
               </div>
 
@@ -535,7 +537,7 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate, onOrderPlaced })
                 {paymentMethod === 'card' && (
                   <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-col gap-3">
                     <div>
-                      <label className="font-bold text-slate-700 block mb-1">Card Number (Simulated)</label>
+                      <label className="font-bold text-slate-700 block mb-1">{t('checkout.cardNumber')} (Simulated)</label>
                       <input
                         type="text"
                         required
@@ -546,7 +548,7 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate, onOrderPlaced })
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="font-bold text-slate-700 block mb-1">Expiry Date (MM/YY)</label>
+                        <label className="font-bold text-slate-700 block mb-1">{t('checkout.cardExpiry')}</label>
                         <input
                           type="text"
                           required
@@ -556,7 +558,7 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate, onOrderPlaced })
                         />
                       </div>
                       <div>
-                        <label className="font-bold text-slate-700 block mb-1">CVV Security Code</label>
+                        <label className="font-bold text-slate-700 block mb-1">{t('checkout.cardCvv')}</label>
                         <input
                           type="password"
                           maxLength={4}
@@ -568,7 +570,7 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate, onOrderPlaced })
                       </div>
                     </div>
                     <div>
-                      <label className="font-bold text-slate-700 block mb-1">Cardholder Name</label>
+                      <label className="font-bold text-slate-700 block mb-1">{t('checkout.cardHolder')}</label>
                       <input
                         type="text"
                         required
@@ -583,13 +585,13 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate, onOrderPlaced })
                 {paymentMethod === 'upi' && (
                   <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-col gap-3 text-center">
                     <p className="text-xs text-slate-600">
-                      Scan QR code or enter your registered UPI Virtual Private Address:
+                      {t('checkout.upiSub')}
                     </p>
                     <div className="w-32 h-32 bg-white border border-slate-200 rounded-xl p-2 mx-auto flex items-center justify-center">
                       <QrCode className="w-24 h-24 text-slate-800" />
                     </div>
                     <div className="text-left">
-                      <label className="font-bold text-slate-700 block mb-1">UPI ID</label>
+                      <label className="font-bold text-slate-700 block mb-1">{t('checkout.upiId')}</label>
                       <input
                         type="text"
                         value={upiId}
@@ -603,7 +605,7 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate, onOrderPlaced })
 
                 {paymentMethod === 'netbanking' && (
                   <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-col gap-2">
-                    <label className="font-bold text-slate-700 block mb-1">Select Bank</label>
+                    <label className="font-bold text-slate-700 block mb-1">{t('checkout.selectBank')}</label>
                     <select className="w-full px-3 py-2 bg-white rounded-xl border border-slate-200 focus:outline-none focus:border-orange-500 cursor-pointer">
                       <option>HDFC Bank</option>
                       <option>State Bank of India (SBI)</option>
@@ -616,8 +618,8 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate, onOrderPlaced })
 
                 {paymentMethod === 'cod' && (
                   <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs">
-                    <p className="font-bold mb-1">Cash on Delivery selected</p>
-                    <p>Pay with cash or UPI QR upon package arrival at your doorstep.</p>
+                    <p className="font-bold mb-1">{t('checkout.codTitle')}</p>
+                    <p>{t('checkout.codNotice')}</p>
                   </div>
                 )}
 
@@ -626,9 +628,9 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate, onOrderPlaced })
                   <button
                     type="button"
                     onClick={() => setCurrentStep('shipping')}
-                    className="text-xs font-bold text-slate-500 hover:text-slate-800"
+                    className="text-xs font-bold text-slate-500 hover:text-slate-800 cursor-pointer"
                   >
-                    ← Back to Shipping
+                    ← {t('checkout.back')}
                   </button>
 
                   <button
@@ -639,12 +641,12 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate, onOrderPlaced })
                     {isProcessing ? (
                       <div className="flex items-center gap-2">
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        <span>Authorizing Payment...</span>
+                        <span>{t('checkout.processing')}</span>
                       </div>
                     ) : (
                       <>
                         <ShieldCheck className="w-4 h-4" />
-                        <span>Pay ${finalPayableTotal.toFixed(2)} & Place Order</span>
+                        <span>{t('checkout.completePayment', { amount: finalPayableTotal.toFixed(2) })}</span>
                       </>
                     )}
                   </button>
@@ -658,7 +660,7 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate, onOrderPlaced })
         <div className="lg:col-span-4 flex flex-col gap-4 sticky top-24">
           <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs">
             <h3 className="text-base font-bold text-slate-900 pb-3 border-b border-slate-100">
-              Order Review ({items.length} items)
+              {t('checkout.orderSummary', { count: items.length })}
             </h3>
 
             {/* Items review snippet */}
@@ -686,26 +688,26 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate, onOrderPlaced })
             {/* Calculations */}
             <div className="pt-3 border-t border-slate-100 flex flex-col gap-2 text-xs">
               <div className="flex justify-between text-slate-600">
-                <span>Subtotal</span>
+                <span>{t('cart.subtotal', { count: items.length })}</span>
                 <span>${subtotal.toFixed(2)}</span>
               </div>
               {discount > 0 && (
                 <div className="flex justify-between text-emerald-600 font-semibold">
-                  <span>Discount</span>
+                  <span>{t('cart.discount')}</span>
                   <span>-${discount.toFixed(2)}</span>
                 </div>
               )}
               <div className="flex justify-between text-slate-600">
-                <span>Shipping</span>
-                <span>{finalShippingCost === 0 ? 'FREE' : `$${finalShippingCost.toFixed(2)}`}</span>
+                <span>{t('cart.deliveryFee')}</span>
+                <span>{finalShippingCost === 0 ? t('cart.free') : `$${finalShippingCost.toFixed(2)}`}</span>
               </div>
               <div className="flex justify-between text-slate-600">
-                <span>Tax (8%)</span>
+                <span>{t('cart.estimatedTax')}</span>
                 <span>${tax.toFixed(2)}</span>
               </div>
 
               <div className="pt-3 border-t border-slate-100 flex justify-between items-baseline">
-                <span className="font-bold text-slate-900 text-sm">Total Payable</span>
+                <span className="font-bold text-slate-900 text-sm">{t('cart.total')}</span>
                 <span className="text-xl font-black text-slate-900">
                   ${finalPayableTotal.toFixed(2)}
                 </span>

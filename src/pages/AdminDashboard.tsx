@@ -4,6 +4,7 @@ import { productService } from '../services/productService';
 import { orderService } from '../services/orderService';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { useTranslation } from '../context/LanguageContext';
 import { CATEGORIES } from '../components/common/Navbar';
 import {
   DollarSign,
@@ -30,6 +31,15 @@ interface AdminDashboardProps {
   onNavigate: (tab: string, param?: string) => void;
 }
 
+const ORDER_STATUS_OPTIONS: OrderStatus[] = [
+  'Order Placed',
+  'Confirmed',
+  'Packed',
+  'Shipped',
+  'Out for Delivery',
+  'Delivered',
+];
+
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   allProducts,
   onProductsUpdate,
@@ -37,6 +47,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 }) => {
   const { user } = useAuth();
   const { showToast } = useToast();
+  const { t, tCategory, tStatus, tRole } = useTranslation();
 
   const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'orders' | 'customers'>('overview');
   const [orders, setOrders] = useState<Order[]>([]);
@@ -74,7 +85,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const updated = await orderService.updateOrderStatus(orderId, newStatus);
     if (updated) {
       setOrders((prev) => prev.map((o) => (o.id === orderId ? updated : o)));
-      showToast(`Order #${orderId} marked as ${newStatus.toUpperCase()}`, { type: 'success' });
+      showToast(t('toast.orderStatusUpdated', { id: orderId, status: tStatus(newStatus) }), { type: 'success' });
     }
   };
 
@@ -126,7 +137,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         images: [pImage],
         description: pDesc,
       });
-      showToast('Product updated successfully!', { type: 'success' });
+      showToast(t('toast.productUpdated'), { type: 'success' });
     } else {
       // Add
       await productService.addProduct({
@@ -144,7 +155,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         isNewArrival: true,
         specifications: { Model: '2026 Edition', Warranty: '1 Year Brand Warranty' },
       });
-      showToast('Product created and published to catalog!', { type: 'success' });
+      showToast(t('toast.productCreated'), { type: 'success' });
     }
 
     setIsProductModalOpen(false);
@@ -152,12 +163,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   };
 
   // Delete product
-  const handleDeleteProduct = async (id: string, name: string) => {
-    if (window.confirm(`Are you sure you want to delete "${name}" from inventory?`)) {
-      await productService.deleteProduct(id);
-      showToast('Product removed from catalog', { type: 'info' });
-      onProductsUpdate();
-    }
+  const handleDeleteProduct = async (id: string) => {
+    await productService.deleteProduct(id);
+    showToast(t('toast.productDeleted'), { type: 'info' });
+    onProductsUpdate();
   };
 
   // Filtered lists
@@ -178,9 +187,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 w-full">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 mb-6">
-        <button onClick={() => onNavigate('home')} className="hover:text-slate-700">Home</button>
+        <button onClick={() => onNavigate('home')} className="hover:text-slate-700 cursor-pointer">{t('profile.breadcrumbHome')}</button>
         <ChevronRight className="w-3 h-3" />
-        <span className="text-slate-800">Admin Control Center</span>
+        <span className="text-slate-800">{t('admin.dashboardTitle')}</span>
       </div>
 
       {/* Header with Navigation Tabs */}
@@ -188,11 +197,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         <div>
           <div className="flex items-center gap-2">
             <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-700 font-bold text-[10px] uppercase">
-              Admin Portal
+              {t('role.admin')}
             </span>
-            <span className="text-xs text-slate-400">Live Management</span>
+            <span className="text-xs text-slate-400">{t('admin.dashboardTitle')}</span>
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 mt-1">E-Commerce Administration</h1>
+          <h1 className="text-2xl font-bold text-slate-900 mt-1">{t('admin.dashboardTitle')}</h1>
+          <p className="text-xs text-slate-500 mt-0.5">{t('admin.dashboardSubtitle')}</p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -201,7 +211,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             className="px-4 py-2 bg-[#E84A27] hover:bg-[#d43f1f] text-white text-xs font-bold rounded-xl shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            Add New Product
+            {t('admin.addProduct')}
           </button>
         </div>
       </div>
@@ -209,15 +219,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {/* Admin Nav Tabs */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-8">
         {[
-          { id: 'overview', label: '📊 Executive Overview' },
-          { id: 'products', label: `📦 Products & Stock (${allProducts.length})` },
-          { id: 'orders', label: `🚚 Customer Orders (${orders.length})` },
-          { id: 'customers', label: '👥 User Directory' },
+          { id: 'overview', label: `📊 ${t('admin.tabOverview')}` },
+          { id: 'products', label: `📦 ${t('admin.tabProducts')} (${allProducts.length})` },
+          { id: 'orders', label: `🚚 ${t('admin.tabOrders')} (${orders.length})` },
+          { id: 'customers', label: `👥 ${t('admin.tabCustomers')}` },
         ].map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-colors shrink-0 ${
+            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-colors shrink-0 cursor-pointer ${
               activeTab === tab.id
                 ? 'bg-slate-900 text-white shadow-xs'
                 : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -238,9 +248,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <DollarSign className="w-6 h-6" />
               </div>
               <div>
-                <span className="text-xs text-slate-400 font-semibold block">Total Revenue</span>
+                <span className="text-xs text-slate-400 font-semibold block">{t('admin.totalRevenue')}</span>
                 <span className="text-2xl font-black text-slate-900">${totalSales.toFixed(2)}</span>
-                <span className="text-[11px] text-emerald-600 font-bold block mt-0.5">+18.4% this week</span>
+                <span className="text-[11px] text-emerald-600 font-bold block mt-0.5">+18.4%</span>
               </div>
             </div>
 
@@ -249,9 +259,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <ShoppingCart className="w-6 h-6" />
               </div>
               <div>
-                <span className="text-xs text-slate-400 font-semibold block">Total Orders</span>
+                <span className="text-xs text-slate-400 font-semibold block">{t('admin.totalOrders')}</span>
                 <span className="text-2xl font-black text-slate-900">{totalOrdersCount}</span>
-                <span className="text-[11px] text-blue-600 font-bold block mt-0.5">100% simulated dispatch</span>
+                <span className="text-[11px] text-blue-600 font-bold block mt-0.5">{t('admin.quickStatCompleted')}</span>
               </div>
             </div>
 
@@ -260,9 +270,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <Package className="w-6 h-6" />
               </div>
               <div>
-                <span className="text-xs text-slate-400 font-semibold block">Active Products</span>
+                <span className="text-xs text-slate-400 font-semibold block">{t('admin.catalogItems')}</span>
                 <span className="text-2xl font-black text-slate-900">{allProducts.length}</span>
-                <span className="text-[11px] text-slate-500 font-medium block mt-0.5">Across 8 categories</span>
+                <span className="text-[11px] text-slate-500 font-medium block mt-0.5">{CATEGORIES.length} {t('footer.categories').toLowerCase()}</span>
               </div>
             </div>
 
@@ -271,20 +281,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <AlertTriangle className="w-6 h-6" />
               </div>
               <div>
-                <span className="text-xs text-slate-400 font-semibold block">Low Stock Items</span>
+                <span className="text-xs text-slate-400 font-semibold block">{t('admin.lowStockAlerts')}</span>
                 <span className="text-2xl font-black text-amber-600">{lowStockProducts.length}</span>
-                <span className="text-[11px] text-amber-700 font-bold block mt-0.5">≤ 10 units in stock</span>
+                <span className="text-[11px] text-amber-700 font-bold block mt-0.5">≤ 10 {t('admin.stock')}</span>
               </div>
             </div>
           </div>
 
-          {/* Interactive Visual Charts (SVG Data Visualization) */}
+          {/* Interactive Visual Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Sales Revenue Trend Chart */}
             <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">Monthly Sales Revenue ($)</h3>
+                  <h3 className="text-sm font-bold text-slate-900">{t('admin.totalRevenue')} ($)</h3>
                   <p className="text-xs text-slate-400">Quarterly performance simulation</p>
                 </div>
                 <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
@@ -322,8 +332,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">Catalog Category Distribution</h3>
-                  <p className="text-xs text-slate-400">Inventory share by department</p>
+                  <h3 className="text-sm font-bold text-slate-900">{t('admin.category')}</h3>
+                  <p className="text-xs text-slate-400">{t('admin.catalogItems')}</p>
                 </div>
               </div>
 
@@ -335,7 +345,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   return (
                     <div key={cat}>
                       <div className="flex justify-between text-xs mb-1">
-                        <span className="font-semibold text-slate-700">{cat}</span>
+                        <span className="font-semibold text-slate-700">{tCategory(cat)}</span>
                         <span className="text-slate-400 font-mono">{count} items ({pct}%)</span>
                       </div>
                       <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
@@ -354,10 +364,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <div className="p-4 sm:p-5 bg-amber-50/70 border-b border-amber-200 flex items-center justify-between">
                 <div className="flex items-center gap-2 text-amber-900">
                   <AlertTriangle className="w-4 h-4 text-amber-600" />
-                  <h3 className="text-sm font-bold">Inventory Low-Stock Warning</h3>
+                  <h3 className="text-sm font-bold">{t('admin.lowStockAlerts')}</h3>
                 </div>
                 <span className="text-xs text-amber-700 font-semibold">
-                  {lowStockProducts.length} items require re-ordering
+                  {lowStockProducts.length} items
                 </span>
               </div>
               <div className="divide-y divide-slate-100">
@@ -367,18 +377,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       <img src={p.images[0]} alt={p.name} className="w-10 h-10 object-cover rounded-lg border border-slate-200" />
                       <div>
                         <p className="font-bold text-slate-900">{p.name}</p>
-                        <p className="text-[11px] text-slate-500">{p.brand} • {p.category}</p>
+                        <p className="text-[11px] text-slate-500">{p.brand} • {tCategory(p.category)}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="px-2.5 py-1 rounded-md bg-amber-100 text-amber-900 font-extrabold text-[11px]">
-                        Only {p.stock} left
+                        {p.stock} {t('admin.stock')}
                       </span>
                       <button
                         onClick={() => handleOpenEditProduct(p)}
-                        className="px-3 py-1 bg-slate-900 text-white rounded-lg font-bold text-xs"
+                        className="px-3 py-1 bg-slate-900 text-white rounded-lg font-bold text-xs cursor-pointer"
                       >
-                        Restock
+                        {t('admin.edit')}
                       </button>
                     </div>
                   </div>
@@ -399,7 +409,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 type="text"
                 value={productSearch}
                 onChange={(e) => setProductSearch(e.target.value)}
-                placeholder="Search products by title, brand, category..."
+                placeholder={t('admin.searchProducts')}
                 className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-orange-500"
               />
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
@@ -407,9 +417,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
             <button
               onClick={handleOpenAddProduct}
-              className="px-4 py-2 bg-[#E84A27] hover:bg-[#d63f1f] text-white text-xs font-bold rounded-xl flex items-center gap-1.5 self-end sm:self-auto"
+              className="px-4 py-2 bg-[#E84A27] hover:bg-[#d63f1f] text-white text-xs font-bold rounded-xl flex items-center gap-1.5 self-end sm:self-auto cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5" /> Add Product
+              <Plus className="w-3.5 h-3.5" /> {t('admin.addProduct')}
             </button>
           </div>
 
@@ -418,12 +428,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <table className="w-full text-xs text-left">
               <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-[10px] tracking-wider font-bold">
                 <tr>
-                  <th className="py-3 px-4">Product</th>
-                  <th className="py-3 px-4">Category</th>
-                  <th className="py-3 px-4">Price</th>
-                  <th className="py-3 px-4">Stock</th>
-                  <th className="py-3 px-4">Rating</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
+                  <th className="py-3 px-4">{t('admin.productName')}</th>
+                  <th className="py-3 px-4">{t('admin.category')}</th>
+                  <th className="py-3 px-4">{t('admin.price')}</th>
+                  <th className="py-3 px-4">{t('admin.stock')}</th>
+                  <th className="py-3 px-4">{t('admin.rating')}</th>
+                  <th className="py-3 px-4 text-right">{t('admin.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -442,7 +452,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </div>
                       </div>
                     </td>
-                    <td className="py-3 px-4 font-semibold text-slate-700">{prod.category}</td>
+                    <td className="py-3 px-4 font-semibold text-slate-700">{tCategory(prod.category)}</td>
                     <td className="py-3 px-4 font-extrabold text-slate-900">${prod.price.toFixed(2)}</td>
                     <td className="py-3 px-4">
                       <span
@@ -460,15 +470,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       <div className="flex items-center justify-end gap-1.5">
                         <button
                           onClick={() => handleOpenEditProduct(prod)}
-                          className="p-1.5 text-slate-500 hover:text-orange-600 rounded-lg hover:bg-slate-100"
-                          title="Edit product"
+                          className="p-1.5 text-slate-500 hover:text-orange-600 rounded-lg hover:bg-slate-100 cursor-pointer"
+                          title={t('admin.edit')}
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
                         <button
-                          onClick={() => handleDeleteProduct(prod.id, prod.name)}
-                          className="p-1.5 text-slate-500 hover:text-rose-600 rounded-lg hover:bg-slate-100"
-                          title="Delete product"
+                          onClick={() => handleDeleteProduct(prod.id)}
+                          className="p-1.5 text-slate-500 hover:text-rose-600 rounded-lg hover:bg-slate-100 cursor-pointer"
+                          title={t('admin.delete')}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -491,7 +501,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 type="text"
                 value={orderSearch}
                 onChange={(e) => setOrderSearch(e.target.value)}
-                placeholder="Search orders by ID or customer..."
+                placeholder={t('admin.searchOrders')}
                 className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-orange-500"
               />
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
@@ -502,12 +512,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <table className="w-full text-xs text-left">
               <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-[10px] tracking-wider font-bold">
                 <tr>
-                  <th className="py-3 px-4">Order ID</th>
-                  <th className="py-3 px-4">Customer</th>
-                  <th className="py-3 px-4">Items</th>
-                  <th className="py-3 px-4">Total</th>
-                  <th className="py-3 px-4">Status & Action</th>
-                  <th className="py-3 px-4 text-right">Tracking</th>
+                  <th className="py-3 px-4">{t('admin.orderId')}</th>
+                  <th className="py-3 px-4">{t('admin.customer')}</th>
+                  <th className="py-3 px-4">{t('orders.title')}</th>
+                  <th className="py-3 px-4">{t('admin.amount')}</th>
+                  <th className="py-3 px-4">{t('admin.status')}</th>
+                  <th className="py-3 px-4 text-right">{t('admin.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -521,7 +531,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <td className="py-3 px-4 text-slate-600">{ord.items.length} item(s)</td>
                     <td className="py-3 px-4 font-black text-slate-900">${ord.total.toFixed(2)}</td>
                     <td className="py-3 px-4">
-                      {/* Status select dropdown */}
+                      {/* Status select dropdown with translated labels */}
                       <select
                         value={ord.status}
                         onChange={(e) =>
@@ -529,21 +539,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         }
                         className="px-2.5 py-1 text-xs rounded-lg font-bold border border-slate-200 bg-white focus:outline-none focus:border-orange-500 cursor-pointer"
                       >
-                        <option value="placed">Placed</option>
-                        <option value="confirmed">Confirmed</option>
-                        <option value="packed">Packed</option>
-                        <option value="shipped">Shipped</option>
-                        <option value="out_for_delivery">Out for Delivery</option>
-                        <option value="delivered">Delivered</option>
-                        <option value="cancelled">Cancelled</option>
+                        {ORDER_STATUS_OPTIONS.map((st) => (
+                          <option key={st} value={st}>
+                            {tStatus(st)}
+                          </option>
+                        ))}
                       </select>
                     </td>
                     <td className="py-3 px-4 text-right">
                       <button
                         onClick={() => onNavigate('order-tracking', ord.id)}
-                        className="px-3 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-[11px]"
+                        className="px-3 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-[11px] cursor-pointer"
                       >
-                        Track
+                        {t('orders.trackPackage')}
                       </button>
                     </td>
                   </tr>
@@ -557,7 +565,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {/* 4. CUSTOMERS DIRECTORY TAB */}
       {activeTab === 'customers' && (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6">
-          <h3 className="text-base font-bold text-slate-900 mb-4">Customer Directory</h3>
+          <h3 className="text-base font-bold text-slate-900 mb-4">{t('admin.customerList')}</h3>
           <div className="divide-y divide-slate-100">
             <div className="py-3 flex items-center justify-between text-xs">
               <div className="flex items-center gap-3">
@@ -572,7 +580,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               </div>
               <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">
-                Active Buyer
+                {tRole('customer')}
               </span>
             </div>
 
@@ -589,7 +597,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               </div>
               <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 font-bold text-[10px]">
-                Verified Customer
+                {tRole('customer')}
               </span>
             </div>
 
@@ -605,8 +613,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <p className="text-slate-400">meera.patel@example.com • +91 98765 99887</p>
                 </div>
               </div>
-              <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 font-bold text-[10px]">
-                Verified Customer
+              <span className="px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 font-bold text-[10px]">
+                {tRole('admin')}
               </span>
             </div>
           </div>
@@ -625,15 +633,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </button>
 
             <h3 className="text-lg font-bold text-slate-900 mb-1">
-              {editingProductId ? 'Edit Product' : 'Add New Product to Inventory'}
+              {editingProductId ? t('admin.modalEditProduct') : t('admin.modalAddProduct')}
             </h3>
-            <p className="text-xs text-slate-500 mb-4">
-              All inventory updates reflect immediately in the public catalog
-            </p>
 
-            <form onSubmit={handleSaveProduct} className="flex flex-col gap-3 text-xs">
+            <form onSubmit={handleSaveProduct} className="flex flex-col gap-3 text-xs mt-4">
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Product Title</label>
+                <label className="font-bold text-slate-700 block mb-1">{t('admin.inputName')}</label>
                 <input
                   type="text"
                   required
@@ -645,7 +650,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Brand Name</label>
+                  <label className="font-bold text-slate-700 block mb-1">{t('admin.inputBrand')}</label>
                   <input
                     type="text"
                     required
@@ -655,7 +660,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Category</label>
+                  <label className="font-bold text-slate-700 block mb-1">{t('admin.inputCategory')}</label>
                   <select
                     value={pCategory}
                     onChange={(e) => setPCategory(e.target.value as ProductCategory)}
@@ -663,7 +668,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   >
                     {CATEGORIES.map((c: ProductCategory) => (
                       <option key={c} value={c}>
-                        {c}
+                        {tCategory(c)}
                       </option>
                     ))}
                   </select>
@@ -672,7 +677,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Selling Price ($)</label>
+                  <label className="font-bold text-slate-700 block mb-1">{t('admin.inputPrice')}</label>
                   <input
                     type="number"
                     step="0.01"
@@ -683,7 +688,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Original Price ($)</label>
+                  <label className="font-bold text-slate-700 block mb-1">{t('admin.inputOrigPrice')}</label>
                   <input
                     type="number"
                     step="0.01"
@@ -694,7 +699,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Stock Units</label>
+                  <label className="font-bold text-slate-700 block mb-1">{t('admin.inputStock')}</label>
                   <input
                     type="number"
                     required
@@ -706,7 +711,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Primary Image URL</label>
+                <label className="font-bold text-slate-700 block mb-1">{t('admin.inputImageUrl')}</label>
                 <input
                   type="url"
                   required
@@ -718,7 +723,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Description</label>
+                <label className="font-bold text-slate-700 block mb-1">{t('admin.inputDescription')}</label>
                 <textarea
                   rows={3}
                   required
@@ -728,12 +733,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 />
               </div>
 
-              <button
-                type="submit"
-                className="mt-3 w-full py-3 bg-[#E84A27] hover:bg-[#d63f1f] text-white font-bold rounded-xl text-xs shadow-md transition-colors cursor-pointer"
-              >
-                {editingProductId ? 'Update Product Details' : 'Publish Product to Store'}
-              </button>
+              <div className="flex gap-2 mt-2">
+                <button
+                  type="submit"
+                  className="flex-1 py-3 bg-[#E84A27] hover:bg-[#d63f1f] text-white font-bold rounded-xl text-xs shadow-md transition-colors cursor-pointer"
+                >
+                  {t('admin.saveProduct')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsProductModalOpen(false)}
+                  className="px-4 py-3 border border-slate-200 text-slate-600 rounded-xl text-xs font-bold cursor-pointer"
+                >
+                  {t('admin.cancel')}
+                </button>
+              </div>
             </form>
           </div>
         </div>

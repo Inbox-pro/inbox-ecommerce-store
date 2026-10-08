@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { CartItem, Product, SavedItem, Coupon } from '../types';
 import { DEMO_COUPONS } from '../data/coupons';
 import { useToast } from './ToastContext';
+import { useTranslation } from './LanguageContext';
 
 const CART_STORAGE_KEY = 'inbox_cart_items_v1';
 const SAVED_STORAGE_KEY = 'inbox_saved_items_v1';
@@ -42,6 +43,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { showToast } = useToast();
+  const { t } = useTranslation();
 
   const [cart, setCart] = useState<CartItem[]>(() => {
     try {
@@ -114,8 +116,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
 
-    showToast(`Added to cart`, {
-      message: `${product.name} is now in your cart.`,
+    showToast(t('toast.addedToCart'), {
+      message: t('toast.addedToCartDesc', { name: product.name }),
       type: 'success',
     });
   };
@@ -150,8 +152,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           (size ? item.selectedSize === size : true)
       );
       if (itemToRemove) {
-        showToast(`Item removed`, {
-          message: `${itemToRemove.product.name} removed from cart.`,
+        showToast(t('toast.itemRemoved'), {
+          message: t('toast.itemRemovedDesc', { name: itemToRemove.product.name }),
           type: 'info',
         });
       }
@@ -186,8 +188,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           selectedSize: item.selectedSize,
         },
       ]);
-      showToast('Saved for later', {
-        message: `${item.product.name} moved to saved items.`,
+      showToast(t('toast.savedForLater'), {
+        message: t('toast.savedForLaterDesc', { name: item.product.name }),
         type: 'info',
       });
     }
@@ -207,7 +209,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const removeSavedItem = (productId: string) => {
     setSavedItems((prev) => prev.filter((i) => i.id !== productId && i.product.id !== productId));
-    showToast('Removed from saved list', { type: 'info' });
+    showToast(t('toast.removedFromSaved'), { type: 'info' });
   };
 
   const removeSavedForLater = (id: string) => {
@@ -228,8 +230,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     setAppliedCoupon(found);
-    showToast(`Coupon applied!`, {
-      message: `${found.code}: ${found.description}`,
+    showToast(t('toast.couponApplied'), {
+      message: t('toast.couponAppliedDesc', { code: found.code, desc: found.description }),
       type: 'success',
     });
     return { success: true, message: `Coupon ${found.code} applied successfully!` };
@@ -237,7 +239,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const removeCoupon = () => {
     setAppliedCoupon(null);
-    showToast('Coupon removed', { type: 'info' });
+    showToast(t('toast.couponRemoved'), { type: 'info' });
   };
 
   const clearCart = () => {

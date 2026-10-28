@@ -1,0 +1,109 @@
+export interface ApiErrorPayload {
+  code: string;
+  message: string;
+  fields?: Record<string, string>;
+  requestId?: string;
+}
+
+export class ApiError extends Error {
+  status: number;
+  code: string;
+  fields?: Record<string, string>;
+  requestId?: string;
+
+  constructor(status: number, payload: ApiErrorPayload) {
+    super(payload.message || 'API request failed');
+    this.name = 'ApiError';
+    this.status = status;
+    this.code = payload.code || 'UNKNOWN_ERROR';
+    this.fields = payload.fields;
+    this.requestId = payload.requestId;
+  }
+}
+
+export async function apiRequest<T = any>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const url = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+
+  const defaultHeaders: Record<string, string> = {
+    'Accept': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
+  };
+
+  // If client-side CSRF cookie exists, attach to prevent CSRF attacks
+  if (typeof document !== 'undefined' && document.cookie) {
+    const csrfMatch = document.cookie.match(/(?:^|;\s*)inbox_csrf_token=([^;]+)/);
+    if (csrfMatch && csrfMatch[1]) {
+      defaultHeaders['x-csrf-token'] = decodeURIComponent(csrfMatch[1]);
+    }
+  }
+
+  if (options.body && !(options.body instanceof FormData)) {
+    defaultHeaders['Content-Type'] = 'application/json';
+  }
+
+  const headers = new Headers(defaultHeaders);
+  new Headers(options.headers).forEach((value, key) => headers.set(key, value));
+  headers.set('X-Requested-With', 'XMLHttpRequest');
+  const response = await fetch(url, {
+    ...options,
+    credentials: 'include',
+    headers,
+  });
+
+  const isJson = response.headers.get('content-type')?.includes('application/json');
+  const body = isJson ? await response.json() : null;
+
+  if (!response.ok) {
+    const errorPayload: ApiErrorPayload = body?.error || {
+      code: `HTTP_${response.status}`,
+      message: response.statusText || 'Request failed',
+    };
+
+    const isAuthProbe = url.includes('/auth/me') || url.includes('/super-admin/my-application');
+    if (response.status === 401 && !isAuthProbe && typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('inbox:auth-required', {
+          detail: { message: errorPayload.message || 'Authentication required', url },
+        })
+      );
+    }
+
+    throw new ApiError(response.status, errorPayload);
+  }
+
+  return (body?.data ?? body) as T;
+}
+
+export const apiClient = {
+  get: <T = any>(url: string, options?: RequestInit) =>
+    apiRequest<T>(url, { ...options, method: 'GET' }),
+  post: <T = any>(url: string, body?: any, options?: RequestInit) =>
+    apiRequest<T>(url, {
+      ...options,
+      method: 'POST',
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    }),
+  put: <T = any>(url: string, body?: any, options?: RequestInit) =>
+    apiRequest<T>(url, {
+      ...options,
+      method: 'PUT',
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    }),
+  patch: <T = any>(url: string, body?: any, options?: RequestInit) =>
+    apiRequest<T>(url, {
+      ...options,
+      method: 'PATCH',
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    }),
+  delete: <T = any>(url: string, options?: RequestInit) =>
+    apiRequest<T>(url, { ...options, method: 'DELETE' }),
+  upload: <T = any>(url: string, formData: FormData, options?: RequestInit) =>
+    apiRequest<T>(url, {
+      ...options,
+      method: 'POST',
+      body: formData,
+    }),
+};

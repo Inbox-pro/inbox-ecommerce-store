@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { BrandLogo } from './BrandLogo';
 import { useToast } from '../../context/ToastContext';
 import { useTranslation } from '../../context/LanguageContext';
+import { apiClient } from '../../services/apiClient';
 import { Mail, Phone, MapPin, ShieldCheck, Truck, RotateCcw, Headphones, Send } from 'lucide-react';
 
 interface FooterProps {
@@ -12,28 +13,44 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
   const { showToast } = useToast();
   const { t, tCategory } = useTranslation();
   const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [isSubscribing, setIsSubscribing] = useState(false);
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newsletterEmail || !newsletterEmail.includes('@')) {
       showToast(t('toast.validEmailRequired'), { type: 'error' });
       return;
     }
-    showToast(t('toast.subscribedNewsletter'), {
-      message: t('toast.subscribedNewsletterDesc'),
-      type: 'success',
-    });
-    setNewsletterEmail('');
+
+    try {
+      setIsSubscribing(true);
+      await apiClient.post('/api/newsletter/subscribe', {
+        email: newsletterEmail.trim(),
+      });
+
+      showToast(t('toast.subscribedNewsletter'), {
+        message: t('toast.subscribedNewsletterDesc'),
+        type: 'success',
+      });
+      setNewsletterEmail('');
+    } catch (err: any) {
+      showToast('Subscription failed', {
+        message: err?.message || 'Unable to subscribe email at this time',
+        type: 'error',
+      });
+    } finally {
+      setIsSubscribing(false);
+    }
   };
 
   return (
-    <footer className="bg-slate-950 text-slate-400 text-xs border-t border-slate-900 mt-20">
+    <footer className="bg-slate-950 text-slate-400 text-xs border-t border-slate-900 mt-20 print:hidden">
       {/* Guarantees Strip */}
       <div className="border-b border-slate-800/80 py-8 px-4 sm:px-6">
-        <div className="max-w-[1500px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 text-slate-300">
+        <div className="max-w-[1500px] mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 text-slate-300">
           <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-orange-500/10 border border-orange-500/20 text-[#E84A27] flex items-center justify-center shrink-0">
-              <Truck className="w-5 h-5" />
+            <div className="size-11 rounded-2xl bg-orange-500/10 border border-orange-500/20 text-[#E84A27] flex items-center justify-center shrink-0">
+              <Truck className="size-5" />
             </div>
             <div>
               <p className="text-sm font-bold text-white">{t('footer.freeShippingTitle')}</p>
@@ -42,8 +59,8 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           </div>
 
           <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-[#009FE3] flex items-center justify-center shrink-0">
-              <RotateCcw className="w-5 h-5" />
+            <div className="size-11 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-[#009FE3] flex items-center justify-center shrink-0">
+              <RotateCcw className="size-5" />
             </div>
             <div>
               <p className="text-sm font-bold text-white">{t('footer.easyReturnsTitle')}</p>
@@ -52,8 +69,8 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           </div>
 
           <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
-              <ShieldCheck className="w-5 h-5" />
+            <div className="size-11 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+              <ShieldCheck className="size-5" />
             </div>
             <div>
               <p className="text-sm font-bold text-white">{t('footer.genuineBrandsTitle')}</p>
@@ -62,8 +79,8 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           </div>
 
           <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
-              <Headphones className="w-5 h-5" />
+            <div className="size-11 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+              <Headphones className="size-5" />
             </div>
             <div>
               <p className="text-sm font-bold text-white">{t('footer.supportTitle')}</p>
@@ -87,15 +104,15 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
 
             <div className="flex flex-col gap-2 mt-5 text-slate-400 text-xs">
               <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-[#E84A27] shrink-0" />
+                <MapPin className="size-4 text-[#E84A27] shrink-0" />
                 <span>Inbox Infotech Tower, Outer Ring Rd, Bengaluru, Karnataka</span>
               </div>
               <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-[#009FE3] shrink-0" />
+                <Phone className="size-4 text-[#009FE3] shrink-0" />
                 <span>+91 (080) 4567-8900 / 1800-INBOX-EMPORIUM</span>
               </div>
               <div className="flex items-center gap-2">
-                <Mail className="w-4 h-4 text-emerald-400 shrink-0" />
+                <Mail className="size-4 text-emerald-400 shrink-0" />
                 <span>support@inboxinfotech.com</span>
               </div>
             </div>
@@ -131,8 +148,13 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 </button>
               </li>
               <li>
-                <button onClick={() => onNavigate('admin')} className="text-blue-400 hover:text-blue-300 font-semibold cursor-pointer">
-                  {t('nav.adminDashboardDemo')}
+                <button onClick={() => onNavigate('sell')} className="hover:text-white transition-colors cursor-pointer">
+                  Sell on inBox
+                </button>
+              </li>
+              <li>
+                <button onClick={() => onNavigate('admin')} className="text-slate-500 hover:text-slate-300 transition-colors text-[11px] cursor-pointer">
+                  Merchant Portal
                 </button>
               </li>
             </ul>
@@ -188,14 +210,15 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 value={newsletterEmail}
                 onChange={(e) => setNewsletterEmail(e.target.value)}
                 placeholder={t('footer.emailPlaceholder')}
-                className="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500"
+                className="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-orange-500"
               />
               <button
                 type="submit"
-                className="w-full py-2.5 px-4 bg-[#E84A27] hover:bg-[#d63f1f] text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                disabled={isSubscribing}
+                className="w-full py-2.5 px-4 bg-[#E84A27] hover:bg-[#d63f1f] disabled:opacity-60 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
               >
-                <Send className="w-3.5 h-3.5" />
-                {t('footer.subscribeBtn')}
+                <Send className="size-3.5" />
+                {isSubscribing ? 'Subscribing...' : t('footer.subscribeBtn')}
               </button>
             </form>
           </div>
@@ -212,9 +235,8 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             <span className="text-slate-400 font-semibold">{t('footer.acceptedPayments')}</span>
             <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-semibold">Visa</span>
             <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-semibold">Mastercard</span>
-            <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-semibold">UPI</span>
-            <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-semibold">Paytm / GPay</span>
-            <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-semibold">COD</span>
+            <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-semibold">Amex</span>
+            <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-semibold">Cash on Delivery</span>
           </div>
         </div>
       </div>

@@ -2,18 +2,20 @@ import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from '../../context/LanguageContext';
 import { BrandLogo } from '../common/BrandLogo';
-import { X, Eye, EyeOff, KeyRound, Mail, User as UserIcon, Phone, CheckCircle2, ArrowRight } from 'lucide-react';
+import { X, Eye, EyeOff, Mail, User as UserIcon, Phone, CheckCircle2, ArrowRight, ShieldCheck } from 'lucide-react';
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialMode?: 'login' | 'register' | 'forgot';
+  onLoginSuccess?: (role: string) => void;
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({
   isOpen,
   onClose,
   initialMode = 'login',
+  onLoginSuccess,
 }) => {
   const { login, register } = useAuth();
   const { t } = useTranslation();
@@ -33,18 +35,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleFillDemoUser = () => {
-    setEmail('user@inbox.com');
-    setPassword('password123');
-    setErrorMsg('');
-  };
-
-  const handleFillDemoAdmin = () => {
-    setEmail('admin@inbox.com');
-    setPassword('admin123');
-    setErrorMsg('');
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
@@ -55,20 +45,28 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         if (!email.trim() || !password) {
           throw new Error('Please enter both email and password.');
         }
-        await login(email, password);
+        const logged = await login(email, password);
+        if (onLoginSuccess && logged?.role) {
+          onLoginSuccess(logged.role);
+        }
         onClose();
       } else if (mode === 'register') {
-        if (!name.trim() || !email.trim() || !phone.trim() || !password) {
-          throw new Error('Please fill in all registration fields.');
+        if (!name.trim() || !email.trim() || !password) {
+          throw new Error('Please fill in name, email, and password.');
         }
-        await register(name, email, phone);
+        if (password.length < 8) {
+          throw new Error('Password must be at least 8 characters long.');
+        }
+        await register(name, email, password, phone);
         onClose();
       } else if (mode === 'forgot') {
         if (!email.trim()) {
           throw new Error('Please enter your email to receive recovery instructions.');
         }
         // Simulate password reset link
-        await new Promise((resolve) => setTimeout(resolve, 600));
+        await new Promise<void>((resolve) => {
+          setTimeout(resolve, 600);
+        });
         setForgotSuccess(true);
       }
     } catch (err: any) {
@@ -90,7 +88,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors z-10 cursor-pointer"
           aria-label="Close"
         >
-          <X className="w-5 h-5" />
+          <X className="size-5" />
         </button>
 
         {/* Modal Header */}
@@ -108,32 +106,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             {mode === 'register' && t('auth.registerDesc')}
             {mode === 'forgot' && t('auth.forgotDesc')}
           </p>
-
-          {/* Quick Demo Autofill Bar for college presentation */}
-          {mode === 'login' && (
-            <div className="mt-4 p-2.5 bg-orange-50/80 border border-orange-200/80 rounded-xl text-left">
-              <span className="text-[11px] font-bold text-orange-800 uppercase tracking-wider block mb-1.5 flex items-center gap-1">
-                <KeyRound className="w-3.5 h-3.5 text-orange-600" />
-                {t('auth.demoShortcuts')}
-              </span>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={handleFillDemoUser}
-                  className="flex-1 text-xs py-1 px-2.5 bg-white hover:bg-orange-100 text-slate-800 rounded-lg border border-orange-200 font-semibold transition-colors cursor-pointer"
-                >
-                  {t('auth.fillCustomerDemo')}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleFillDemoAdmin}
-                  className="flex-1 text-xs py-1 px-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg font-semibold transition-colors cursor-pointer"
-                >
-                  {t('auth.fillAdminDemo')}
-                </button>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Form Body */}
@@ -146,8 +118,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
           {forgotSuccess ? (
             <div className="text-center py-4">
-              <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-3">
-                <CheckCircle2 className="w-6 h-6" />
+              <div className="size-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-3">
+                <CheckCircle2 className="size-6" />
               </div>
               <h3 className="text-base font-bold text-slate-900">{t('auth.recoverySentTitle')}</h3>
               <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
@@ -170,7 +142,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   <div>
                     <label className="text-xs font-semibold text-slate-700 block mb-1">{t('auth.fullName')}</label>
                     <div className="relative">
-                      <UserIcon className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                      <UserIcon className="size-4 text-slate-400 absolute left-3 top-3" />
                       <input
                         type="text"
                         required
@@ -185,7 +157,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   <div>
                     <label className="text-xs font-semibold text-slate-700 block mb-1">{t('auth.phoneNumber')}</label>
                     <div className="relative">
-                      <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                      <Phone className="size-4 text-slate-400 absolute left-3 top-3" />
                       <input
                         type="tel"
                         required
@@ -202,7 +174,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <div>
                 <label className="text-xs font-semibold text-slate-700 block mb-1">{t('auth.emailAddress')}</label>
                 <div className="relative">
-                  <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                  <Mail className="size-4 text-slate-400 absolute left-3 top-3" />
                   <input
                     type="email"
                     required
@@ -245,7 +217,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 cursor-pointer"
                     >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                     </button>
                   </div>
                 </div>
@@ -279,7 +251,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       {mode === 'register' && t('auth.registerBtn')}
                       {mode === 'forgot' && t('auth.sendResetBtn')}
                     </span>
-                    <ArrowRight className="w-4 h-4" />
+                    <ArrowRight className="size-4" />
                   </>
                 )}
               </button>

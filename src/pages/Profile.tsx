@@ -43,21 +43,35 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
     return (
       <div className="max-w-2xl mx-auto px-4 py-16 text-center">
         <h2 className="text-xl font-bold text-slate-800">{t('profile.notLoggedInTitle')}</h2>
-        <button
-          onClick={() => onNavigate('home')}
-          className="mt-4 px-6 py-2.5 bg-[#E84A27] text-white rounded-xl text-xs font-bold cursor-pointer"
-        >
-          {t('profile.returnHome')}
-        </button>
+        <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+          Sign in to view your personalized profile, manage shipping addresses, and sync your preferences.
+        </p>
+        <div className="flex items-center justify-center gap-3 mt-6">
+          <button
+            onClick={() => onNavigate('home')}
+            className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+          >
+            {t('profile.returnHome')}
+          </button>
+          <button
+            onClick={() => onNavigate('login', 'profile')}
+            className="px-6 py-2.5 bg-[#E84A27] hover:bg-[#d03d1c] text-white rounded-xl text-xs font-bold shadow-md shadow-orange-500/20 transition-all cursor-pointer"
+          >
+            Sign In to Account
+          </button>
+        </div>
       </div>
     );
   }
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    await updateProfile({ name, phone });
-    setIsEditing(false);
-    showToast(t('toast.profileUpdated'), { type: 'success' });
+    try {
+      await updateProfile({ name, phone });
+      setIsEditing(false);
+    } catch {
+      // AuthContext displays error toast
+    }
   };
 
   const handleAddAddressSubmit = async (e: React.FormEvent) => {
@@ -66,23 +80,26 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
       showToast(t('toast.requiredFields'), { type: 'error' });
       return;
     }
-    await addAddress({
-      fullName: user.name,
-      phone: user.phone || phone || '+91 98765 43210',
-      street,
-      city,
-      state,
-      pincode: postalCode,
-      country,
-      type: 'Home',
-      isDefault: (user.addresses || []).length === 0,
-    });
-    setShowAddressForm(false);
-    setStreet('');
-    setCity('');
-    setState('');
-    setPostalCode('');
-    showToast(t('toast.addressAdded'), { type: 'success' });
+    try {
+      await addAddress({
+        fullName: user.name,
+        phone: user.phone || phone || '+91 98765 43210',
+        street,
+        city,
+        state,
+        pincode: postalCode,
+        country,
+        type: 'Home',
+        isDefault: (user.addresses || []).length === 0,
+      });
+      setShowAddressForm(false);
+      setStreet('');
+      setCity('');
+      setState('');
+      setPostalCode('');
+    } catch {
+      // AuthContext displays error toast
+    }
   };
 
   return (
@@ -90,7 +107,7 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 mb-6">
         <button onClick={() => onNavigate('home')} className="hover:text-slate-700 cursor-pointer">{t('profile.breadcrumbHome')}</button>
-        <ChevronRight className="w-3 h-3" />
+        <ChevronRight className="size-3" />
         <span className="text-slate-800">{t('profile.breadcrumbProfile')}</span>
       </div>
 
@@ -101,7 +118,7 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
             <img
               src={user.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'}
               alt={user.name}
-              className="w-20 h-20 rounded-full object-cover mx-auto border-2 border-orange-500 shadow-md mb-3"
+              className="size-20 rounded-full object-cover mx-auto border-2 border-orange-500 shadow-md mb-3"
             />
             <h2 className="text-lg font-bold text-slate-900">{user.name}</h2>
             <p className="text-xs text-slate-500">{user.email}</p>
@@ -117,10 +134,10 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
                 className="w-full p-3 rounded-xl hover:bg-slate-50 text-xs font-bold text-slate-700 flex items-center justify-between transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-2.5">
-                  <Package className="w-4 h-4 text-orange-600" />
+                  <Package className="size-4 text-orange-600" />
                   <span>{t('profile.myOrders')}</span>
                 </div>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
+                <ChevronRight className="size-4 text-slate-400" />
               </button>
 
               <button
@@ -128,10 +145,10 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
                 className="w-full p-3 rounded-xl hover:bg-slate-50 text-xs font-bold text-slate-700 flex items-center justify-between transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-2.5">
-                  <Heart className="w-4 h-4 text-rose-500" />
+                  <Heart className="size-4 text-rose-500" />
                   <span>{t('profile.savedWishlist')}</span>
                 </div>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
+                <ChevronRight className="size-4 text-slate-400" />
               </button>
 
               {isAdmin && (
@@ -140,10 +157,10 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
                   className="w-full p-3 rounded-xl bg-blue-50 text-blue-700 text-xs font-bold flex items-center justify-between transition-colors cursor-pointer"
                 >
                   <div className="flex items-center gap-2.5">
-                    <ShieldCheck className="w-4 h-4 text-blue-600" />
+                    <ShieldCheck className="size-4 text-blue-600" />
                     <span>{t('profile.adminControlPortal')}</span>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-blue-400" />
+                  <ChevronRight className="size-4 text-blue-400" />
                 </button>
               )}
 
@@ -152,7 +169,7 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
                 className="w-full p-3 rounded-xl hover:bg-rose-50 text-xs font-bold text-rose-600 flex items-center justify-between transition-colors mt-2 cursor-pointer"
               >
                 <div className="flex items-center gap-2.5">
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="size-4" />
                   <span>{t('profile.signOut')}</span>
                 </div>
               </button>
@@ -235,7 +252,7 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
                 onClick={() => setShowAddressForm(!showAddressForm)}
                 className="px-3 py-1.5 rounded-xl bg-orange-50 text-orange-700 border border-orange-200 text-xs font-bold flex items-center gap-1 cursor-pointer"
               >
-                <Plus className="w-3.5 h-3.5" />
+                <Plus className="size-3.5" />
                 {t('profile.addNewAddress')}
               </button>
             </div>
@@ -316,11 +333,11 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
             )}
 
             {/* Saved Addresses List */}
-            {user.addresses.length === 0 ? (
+            {(user.addresses || []).length === 0 ? (
               <p className="text-xs text-slate-400 py-4 text-center">{t('profile.noAddresses')}</p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {user.addresses.map((addr: Address) => (
+                {(user.addresses || []).map((addr: Address) => (
                   <div
                     key={addr.id}
                     className={`p-4 rounded-2xl border flex flex-col justify-between ${
@@ -332,7 +349,7 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                          <MapPin className="w-3.5 h-3.5 text-orange-600" />
+                          <MapPin className="size-3.5 text-orange-600" />
                           {t('checkout.step1')}
                         </span>
                         {addr.isDefault && (
@@ -362,7 +379,7 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
                         className="text-slate-400 hover:text-rose-600 ml-auto cursor-pointer"
                         title={t('profile.delete')}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="size-4" />
                       </button>
                     </div>
                   </div>

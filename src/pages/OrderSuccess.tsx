@@ -1,15 +1,48 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Order, OrderItem } from '../types';
 import { useTranslation } from '../context/LanguageContext';
-import { CheckCircle, ArrowRight, Printer, Truck } from 'lucide-react';
+import { orderService } from '../services/orderService';
+import { CheckCircle, ArrowRight, Printer, Truck, FileText } from 'lucide-react';
+import { InvoiceBill } from '../components/common/InvoiceBill';
+import { printInvoiceDocument } from '../utils/printInvoice';
 
 interface OrderSuccessProps {
   order: Order | null;
+  orderId?: string;
   onNavigate: (tab: string, param?: string) => void;
 }
 
-export const OrderSuccess: React.FC<OrderSuccessProps> = ({ order, onNavigate }) => {
+export const OrderSuccess: React.FC<OrderSuccessProps> = ({ order: initialOrder, orderId, onNavigate }) => {
   const { t, tPaymentMethod } = useTranslation();
+  const [order, setOrder] = useState<Order | null>(initialOrder);
+  const [isLoading, setIsLoading] = useState(!initialOrder && Boolean(orderId || new URLSearchParams(window.location.search).get('orderId')));
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
+  useEffect(() => {
+    if (initialOrder) {
+      setOrder(initialOrder);
+      return;
+    }
+    const targetId = orderId || new URLSearchParams(window.location.search).get('orderId');
+    if (targetId) {
+      setIsLoading(true);
+      orderService.getOrderById(targetId)
+        .then((found) => {
+          if (found) setOrder(found);
+        })
+        .catch((error) => { console.error('Could not load order:', error); })
+        .finally(() => setIsLoading(false));
+    }
+  }, [initialOrder, orderId]);
+
+  if (isLoading) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-24 text-center">
+        <div className="size-8 border-3 border-orange-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <p className="text-xs text-slate-500 font-semibold">Loading verified order receipt...</p>
+      </div>
+    );
+  }
 
   if (!order) {
     return (
@@ -26,15 +59,19 @@ export const OrderSuccess: React.FC<OrderSuccessProps> = ({ order, onNavigate })
   }
 
   const handlePrintInvoice = () => {
-    window.print();
+    printInvoiceDocument(order);
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10">
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden p-6 sm:p-10 text-center">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 print:max-w-none print:p-0 print:m-0 print:border-none print:w-full">
+      {/* ---------------------------------------------------- */}
+      {/* SCREEN-ONLY VIEW: Friendly Storefront Confirmation   */}
+      {/* (Hidden in print mode to keep bill 100% clean)       */}
+      {/* ---------------------------------------------------- */}
+      <div className="screen-only print:hidden bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden p-6 sm:p-10 text-center">
         {/* Animated celebration icon */}
-        <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-4">
-          <CheckCircle className="w-9 h-9" />
+        <div className="size-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-4">
+          <CheckCircle className="size-9" />
         </div>
 
         <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-600">
@@ -66,7 +103,7 @@ export const OrderSuccess: React.FC<OrderSuccessProps> = ({ order, onNavigate })
           <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
             <span className="text-[11px] font-bold text-slate-400 uppercase">{t('orderSuccess.trackingNumber')}</span>
             <p className="text-sm font-extrabold text-orange-600 mt-0.5 font-mono">
-              {order.trackingNumber || 'BD8839201IN'}
+              {order.trackingNumber || 'Pending courier assignment'}
             </p>
           </div>
         </div>
@@ -81,7 +118,7 @@ export const OrderSuccess: React.FC<OrderSuccessProps> = ({ order, onNavigate })
                   <img
                     src={it.image}
                     alt={it.name}
-                    className="w-10 h-10 object-cover rounded-lg border border-slate-200"
+                    className="size-10 object-cover rounded-lg border border-slate-200"
                   />
                   <div>
                     <p className="font-bold text-slate-800 line-clamp-1">{it.name}</p>
@@ -93,7 +130,7 @@ export const OrderSuccess: React.FC<OrderSuccessProps> = ({ order, onNavigate })
                   </div>
                 </div>
                 <span className="font-extrabold text-slate-900">
-                  ${(it.price * it.quantity).toFixed(2)}
+                  ${((it.price || 0) * Math.max(0, Math.floor(Number(it.quantity) || 0))).toFixed(2)}
                 </span>
               </div>
             ))}
@@ -101,7 +138,11 @@ export const OrderSuccess: React.FC<OrderSuccessProps> = ({ order, onNavigate })
 
           {/* Totals */}
           <div className="mt-4 pt-3 border-t border-slate-100 flex justify-between items-baseline text-xs">
-            <span className="font-bold text-slate-700">{t('orderSuccess.totalPaid', { method: tPaymentMethod(order.paymentMethod) })}</span>
+            <span className="font-bold text-slate-700">
+              {order.paymentStatus === 'Paid'
+                ? t('orderSuccess.totalPaid', { method: tPaymentMethod(order.paymentMethod) })
+                : `Total Due (${tPaymentMethod(order.paymentMethod)})`}
+            </span>
             <span className="text-base font-black text-slate-900">${order.total.toFixed(2)}</span>
           </div>
         </div>
@@ -112,16 +153,25 @@ export const OrderSuccess: React.FC<OrderSuccessProps> = ({ order, onNavigate })
             onClick={() => onNavigate('order-tracking', order.id)}
             className="px-5 py-2.5 bg-[#E84A27] hover:bg-[#d63f1f] text-white text-xs font-bold rounded-xl shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
           >
-            <Truck className="w-4 h-4" />
+            <Truck className="size-4" />
             {t('orderSuccess.trackLive')}
           </button>
 
           <button
             onClick={handlePrintInvoice}
-            className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"
+            className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+            title="Prints the official clean tax bill without website UI"
           >
-            <Printer className="w-4 h-4" />
+            <Printer className="size-4" />
             {t('orderSuccess.printInvoice')}
+          </button>
+
+          <button
+            onClick={() => setIsPreviewOpen((prev) => !prev)}
+            className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            <FileText className="size-4 text-slate-600" />
+            <span>{isPreviewOpen ? 'Hide Bill Preview' : 'Preview Bill'}</span>
           </button>
 
           <button
@@ -129,9 +179,36 @@ export const OrderSuccess: React.FC<OrderSuccessProps> = ({ order, onNavigate })
             className="px-5 py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"
           >
             <span>{t('orderSuccess.continueShopping')}</span>
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRight className="size-4" />
           </button>
         </div>
+
+        {/* Optional On-Screen Bill Preview */}
+        {isPreviewOpen && (
+          <div className="mt-8 pt-6 border-t border-slate-200 text-left print:hidden animate-fade-in">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Official Bill Preview
+              </span>
+              <button
+                onClick={handlePrintInvoice}
+                className="px-3.5 py-1.5 bg-[#E84A27] text-white text-xs font-bold rounded-lg flex items-center gap-1.5 hover:bg-[#d63f1f] cursor-pointer"
+              >
+                <Printer className="size-3.5" />
+                <span>Print Bill</span>
+              </button>
+            </div>
+            <InvoiceBill order={order} />
+          </div>
+        )}
+      </div>
+
+      {/* ---------------------------------------------------- */}
+      {/* PURE PRINT-ONLY OUTPUT: ONLY THE BILL IS PRINTED     */}
+      {/* (100% free of website navbar, footer, buttons, etc)  */}
+      {/* ---------------------------------------------------- */}
+      <div id="printable-invoice-area" className="printable-bill print:block hidden">
+        <InvoiceBill order={order} />
       </div>
     </div>
   );

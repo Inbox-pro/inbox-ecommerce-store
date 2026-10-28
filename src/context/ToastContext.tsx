@@ -40,6 +40,23 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       setToasts((prev) => [...prev, newToast]);
 
+      // If authentication is required, dispatch event to trigger redirect to login page
+      if (typeof window !== 'undefined') {
+        const titleLower = title.toLowerCase();
+        const msgLower = (options?.message || '').toLowerCase();
+        if (
+          titleLower.includes('authentication require') ||
+          msgLower.includes('authentication require') ||
+          (msgLower.includes('please sign in') && type === 'error')
+        ) {
+          window.dispatchEvent(
+            new CustomEvent('inbox:auth-required', {
+              detail: { title, message: options?.message },
+            })
+          );
+        }
+      }
+
       setTimeout(() => {
         removeToast(id);
       }, duration);
@@ -64,9 +81,9 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             }`}
           >
             <div className="shrink-0 mt-0.5">
-              {toast.type === 'success' && <CheckCircle2 className="w-5 h-5 text-emerald-400" />}
-              {toast.type === 'error' && <AlertCircle className="w-5 h-5 text-rose-400" />}
-              {toast.type === 'info' && <Info className="w-5 h-5 text-sky-400" />}
+              {toast.type === 'success' && <CheckCircle2 className="size-5 text-emerald-400" />}
+              {toast.type === 'error' && <AlertCircle className="size-5 text-rose-400" />}
+              {toast.type === 'info' && <Info className="size-5 text-sky-400" />}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold tracking-tight">{toast.title}</p>
@@ -76,7 +93,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               onClick={() => removeToast(toast.id)}
               className="shrink-0 text-slate-400 hover:text-white transition-colors p-0.5 rounded"
             >
-              <X className="w-4 h-4" />
+              <X className="size-4" />
             </button>
           </div>
         ))}

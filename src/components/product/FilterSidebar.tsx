@@ -13,6 +13,7 @@ interface FilterSidebarProps {
   totalProductsCount: number;
   isOpenMobile?: boolean;
   onCloseMobile?: () => void;
+  variant?: 'desktop' | 'mobile-drawer' | 'both';
 }
 
 export const FilterSidebar: React.FC<FilterSidebarProps> = ({
@@ -24,6 +25,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   totalProductsCount,
   isOpenMobile = false,
   onCloseMobile,
+  variant = 'both',
 }) => {
   const { t, tCategory } = useTranslation();
 
@@ -53,7 +55,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between pb-3 border-b border-slate-200">
         <div className="flex items-center gap-2">
-          <SlidersHorizontal className="w-4 h-4 text-orange-600" />
+          <SlidersHorizontal className="size-4 text-orange-600" />
           <h2 className="text-base font-bold text-slate-900">{t('filters.title')}</h2>
           <span className="text-xs text-slate-400">({totalProductsCount})</span>
         </div>
@@ -61,7 +63,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
           onClick={onResetFilters}
           className="text-xs font-semibold text-orange-600 hover:text-orange-700 flex items-center gap-1 transition-colors cursor-pointer"
         >
-          <RotateCcw className="w-3 h-3" />
+          <RotateCcw className="size-3" />
           {t('filters.resetAll')}
         </button>
       </div>
@@ -81,7 +83,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
             }`}
           >
             <span>{t('filters.allCategories')}</span>
-            {filters.category === '' && <Check className="w-3.5 h-3.5 text-orange-600" />}
+            {filters.category === '' && <Check className="size-3.5 text-orange-600" />}
           </button>
           {categories.map((cat) => (
             <button
@@ -94,7 +96,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
               }`}
             >
               <span>{tCategory(cat)}</span>
-              {filters.category === cat && <Check className="w-3.5 h-3.5 text-orange-600" />}
+              {filters.category === cat && <Check className="size-3.5 text-orange-600" />}
             </button>
           ))}
         </div>
@@ -144,7 +146,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                     type="checkbox"
                     checked={isChecked}
                     onChange={() => handleBrandToggle(b)}
-                    className="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-orange-500 cursor-pointer"
+                    className="size-4 rounded text-orange-600 border-slate-300 focus:ring-orange-500 cursor-pointer"
                   />
                   <span>{b}</span>
                 </label>
@@ -179,7 +181,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                 <RatingStars rating={stars} size="xs" />
                 <span>{t('filters.andUp')}</span>
               </div>
-              {filters.minRating === stars && <Check className="w-3.5 h-3.5 text-amber-600" />}
+              {filters.minRating === stars && <Check className="size-3.5 text-amber-600" />}
             </button>
           ))}
         </div>
@@ -225,43 +227,50 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                 inStockOnly: e.target.checked,
               })
             }
-            className="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-orange-500 cursor-pointer"
+            className="size-4 rounded text-orange-600 border-slate-300 focus:ring-orange-500 cursor-pointer"
           />
         </label>
       </div>
     </div>
   );
 
+  const showDesktop = variant === 'desktop' || variant === 'both';
+  const showMobile = variant === 'mobile-drawer' || variant === 'both';
+
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden lg:block w-64 shrink-0 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm h-fit sticky top-24">
-        {content}
-      </aside>
+      {showDesktop && (
+        <aside className="w-full bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs h-fit">
+          {content}
+        </aside>
+      )}
 
       {/* Mobile Drawer */}
-      {isOpenMobile && (
-        <div className="fixed inset-0 z-50 lg:hidden flex">
+      {showMobile && isOpenMobile && (
+        <div className="fixed inset-0 z-50 lg:hidden flex justify-end bg-slate-900/60 backdrop-blur-xs animate-fade-in">
           <div
-            className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity"
+            className="flex-1"
             onClick={onCloseMobile}
+            aria-label="Close filter backdrop"
           />
-          <div className="relative ml-auto w-full max-w-xs bg-white h-full p-6 shadow-2xl overflow-y-auto z-10 flex flex-col justify-between">
+          <div className="relative w-full max-w-xs sm:max-w-sm bg-white p-6 shadow-2xl overflow-y-auto z-10 flex flex-col justify-between animate-scale">
             <div>
               <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
                 <span className="font-bold text-slate-900 text-base">{t('filters.filterProducts')}</span>
                 <button
                   onClick={onCloseMobile}
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer"
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
+                  aria-label="Close filters"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="size-5" />
                 </button>
               </div>
               {content}
             </div>
             <button
               onClick={onCloseMobile}
-              className="mt-6 w-full py-3 bg-[#E84A27] text-white rounded-xl font-bold text-sm shadow-md cursor-pointer"
+              className="mt-6 w-full py-3 bg-[#E84A27] hover:bg-[#d63f1f] text-white rounded-xl font-bold text-xs shadow-md transition-colors cursor-pointer"
             >
               {t('filters.showResults', { count: totalProductsCount })}
             </button>

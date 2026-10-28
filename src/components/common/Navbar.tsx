@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { BrandLogo } from './BrandLogo';
 import { LanguageSelector } from './LanguageSelector';
 import { useTranslation } from '../../context/LanguageContext';
@@ -15,11 +16,13 @@ import {
   Menu,
   X,
   ChevronDown,
+  ChevronRight,
   Package,
   LogOut,
   MapPin,
   Sparkles,
   Zap,
+  Store,
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -46,7 +49,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   products,
   onOpenAuthModal,
 }) => {
-  const { user, isAuthenticated, isAdmin, logout, switchDemoRole } = useAuth();
+  const { user, isAuthenticated, isAdmin, isSuperAdmin, logout } = useAuth();
   const { totalItemsCount } = useCart();
   const { wishlistCount } = useWishlist();
   const { t, tCategory } = useTranslation();
@@ -88,9 +91,10 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
+    const q = searchQuery.trim();
+    if (q) {
       setShowSuggestions(false);
-      onNavigate('products', searchQuery);
+      onNavigate('products', `search:${encodeURIComponent(q)}`);
     }
   };
 
@@ -101,54 +105,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
-      {/* Top Presentation & Utilities Bar */}
-      <div className="bg-slate-900 text-slate-300 text-xs py-1.5 px-4 sm:px-6">
-        <div className="max-w-[1500px] mx-auto flex flex-wrap items-center justify-between gap-2">
-          {/* Left: Presentation notice */}
-          <div className="flex items-center gap-2">
-            <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-[11px] text-slate-300">
-              <strong className="text-white font-semibold">{t('nav.demoTitle')}</strong> — {t('nav.demoSubtitle')}
-            </span>
-          </div>
-
-          {/* Right: Language Selector + Quick Demo Persona Switcher */}
-          <div className="flex items-center gap-3">
-            {/* 3-Language Selector: ENG, GER, DUT */}
-            <LanguageSelector variant="segmented" />
-
-            <div className="hidden sm:flex items-center gap-1.5 text-[11px]">
-              <span className="text-slate-400">{t('nav.viewingAs')}</span>
-              <span className="text-amber-300 font-bold">
-                {isAdmin ? t('nav.adminBadge') : t('nav.customerBadge')}
-              </span>
-            </div>
-            <div className="flex items-center gap-1 bg-slate-800 p-0.5 rounded-lg border border-slate-700">
-              <button
-                onClick={() => switchDemoRole('customer')}
-                className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors cursor-pointer ${
-                  !isAdmin ? 'bg-orange-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                {t('nav.customerView')}
-              </button>
-              <button
-                onClick={() => {
-                  switchDemoRole('admin');
-                  onNavigate('admin');
-                }}
-                className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors cursor-pointer ${
-                  isAdmin ? 'bg-[#009FE3] text-white shadow-xs' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                {t('nav.adminDashboard')}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs print:hidden">
       {/* Main Navigation Row */}
       <div className="max-w-[1500px] mx-auto px-4 sm:px-6 py-3">
         <div className="flex items-center justify-between gap-4">
@@ -174,7 +131,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 placeholder={t('nav.searchPlaceholder')}
                 className="w-full pl-10 pr-24 py-2.5 bg-slate-100/90 hover:bg-slate-100 focus:bg-white rounded-xl text-sm border border-slate-200 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition-all"
               />
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none" />
+              <Search className="size-4 text-slate-400 absolute left-3 pointer-events-none" />
               <button
                 type="submit"
                 className="absolute right-1.5 px-3 py-1.5 bg-[#E84A27] hover:bg-[#d43f1f] text-white text-xs font-bold rounded-lg transition-colors shadow-xs cursor-pointer"
@@ -185,7 +142,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             {/* Live Autocomplete Dropdown */}
             {showSuggestions && searchQuery.trim() && (
-              <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden z-50 animate-fade-in">
+              <div className="absolute top-full inset-x-0 mt-1.5 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden z-50 animate-fade-in">
                 {searchSuggestions.length > 0 ? (
                   <div className="py-2">
                     <div className="px-3 py-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
@@ -200,7 +157,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                         <img
                           src={prod.images[0]}
                           alt={prod.name}
-                          className="w-9 h-9 object-cover rounded-md border border-slate-200 shrink-0"
+                          className="size-9 object-cover rounded-md border border-slate-200 shrink-0"
                         />
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-bold text-slate-900 truncate">{prod.name}</p>
@@ -228,6 +185,8 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Right Action Icons */}
           <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* Language Selector Dropdown */}
+            <LanguageSelector variant="dropdown" className="shrink-0" />
             {/* Wishlist Icon */}
             <button
               onClick={() => onNavigate('wishlist')}
@@ -235,7 +194,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               aria-label={t('nav.savedWishlist')}
               title={t('nav.savedWishlist')}
             >
-              <Heart className="w-5 h-5" />
+              <Heart className="size-5" />
               {wishlistCount > 0 && (
                 <span className="absolute top-1.5 right-1.5 flex items-center justify-center min-w-4 h-4 px-1 rounded-full bg-rose-500 text-white text-[10px] font-extrabold shadow-xs animate-scale">
                   {wishlistCount}
@@ -250,7 +209,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               aria-label={t('nav.shoppingCart')}
               title={t('nav.shoppingCart')}
             >
-              <ShoppingCart className="w-5 h-5" />
+              <ShoppingCart className="size-5" />
               {totalItemsCount > 0 && (
                 <span className="absolute top-1.5 right-1.5 flex items-center justify-center min-w-4 h-4 px-1 rounded-full bg-[#E84A27] text-white text-[10px] font-extrabold shadow-xs">
                   {totalItemsCount}
@@ -268,19 +227,19 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <img
                     src={user.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'}
                     alt={user.name}
-                    className="w-7 h-7 rounded-full object-cover border border-slate-300"
+                    className="size-7 rounded-full object-cover border border-slate-300"
                   />
                   <span className="hidden lg:inline text-xs font-bold text-slate-800 max-w-[100px] truncate">
                     {user.name.split(' ')[0]}
                   </span>
-                  <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                  <ChevronDown className="size-3.5 text-slate-400" />
                 </button>
               ) : (
                 <button
-                  onClick={onOpenAuthModal}
+                  onClick={() => onNavigate('login', currentTab !== 'login' ? currentTab : undefined)}
                   className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
                 >
-                  <UserIcon className="w-3.5 h-3.5" />
+                  <UserIcon className="size-3.5" />
                   <span>{t('nav.signIn')}</span>
                 </button>
               )}
@@ -299,6 +258,18 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </div>
 
                   <div className="py-1">
+                    {isAdmin && (
+                      <button
+                        onClick={() => {
+                          setUserDropdownOpen(false);
+                          onNavigate(isSuperAdmin ? 'super-admin' : 'admin');
+                        }}
+                        className="w-full text-left px-4 py-2 text-xs font-bold text-sky-700 hover:bg-sky-50 flex items-center gap-2 cursor-pointer border-b border-slate-100"
+                      >
+                        <ShieldCheck className="size-4 text-sky-600" />
+                        <span>{isSuperAdmin ? 'Super Admin Console' : 'Admin Portal'}</span>
+                      </button>
+                    )}
                     <button
                       onClick={() => {
                         setUserDropdownOpen(false);
@@ -306,7 +277,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       }}
                       className="w-full text-left px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer"
                     >
-                      <UserIcon className="w-4 h-4 text-slate-400" />
+                      <UserIcon className="size-4 text-slate-400" />
                       {t('nav.myProfile')}
                     </button>
                     <button
@@ -316,7 +287,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       }}
                       className="w-full text-left px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer"
                     >
-                      <Package className="w-4 h-4 text-slate-400" />
+                      <Package className="size-4 text-slate-400" />
                       {t('nav.myOrders')}
                     </button>
                     <button
@@ -326,21 +297,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                       }}
                       className="w-full text-left px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer"
                     >
-                      <Heart className="w-4 h-4 text-slate-400" />
+                      <Heart className="size-4 text-slate-400" />
                       {t('nav.wishlistWithCount', { count: wishlistCount })}
                     </button>
-                    {isAdmin && (
-                      <button
-                        onClick={() => {
-                          setUserDropdownOpen(false);
-                          onNavigate('admin');
-                        }}
-                        className="w-full text-left px-4 py-2 text-xs font-semibold text-blue-600 hover:bg-blue-50 flex items-center gap-2 cursor-pointer"
-                      >
-                        <ShieldCheck className="w-4 h-4 text-blue-500" />
-                        {t('nav.adminDashboard')}
-                      </button>
-                    )}
                   </div>
 
                   <div className="border-t border-slate-100 pt-1">
@@ -351,7 +310,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       }}
                       className="w-full text-left px-4 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2 cursor-pointer"
                     >
-                      <LogOut className="w-4 h-4 text-rose-500" />
+                      <LogOut className="size-4 text-rose-500" />
                       {t('nav.signOut')}
                     </button>
                   </div>
@@ -365,7 +324,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="p-2 rounded-xl text-slate-700 md:hidden hover:bg-slate-100 cursor-pointer"
               aria-label="Toggle navigation menu"
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? <X className="size-6" /> : <Menu className="size-6" />}
             </button>
           </div>
         </div>
@@ -380,7 +339,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               placeholder={t('nav.searchMobilePlaceholder')}
               className="w-full pl-9 pr-16 py-2 bg-slate-100 rounded-xl text-xs border border-slate-200 focus:outline-none focus:border-orange-500"
             />
-            <Search className="w-4 h-4 text-slate-400 absolute left-2.5" />
+            <Search className="size-4 text-slate-400 absolute left-2.5" />
             <button
               type="submit"
               className="absolute right-1 px-2.5 py-1 bg-[#E84A27] text-white text-[11px] font-bold rounded-lg cursor-pointer"
@@ -388,10 +347,29 @@ export const Navbar: React.FC<NavbarProps> = ({
               {t('nav.go')}
             </button>
           </form>
+
+          {/* Quick horizontal categories swipe bar on mobile */}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-2 mt-1">
+            <button
+              onClick={() => onNavigate('products')}
+              className="px-2.5 py-1 rounded-full bg-slate-100 hover:bg-orange-50 hover:text-orange-600 text-slate-700 text-[11px] font-bold shrink-0 transition-colors cursor-pointer"
+            >
+              {t('nav.allProducts')}
+            </button>
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => onNavigate('products', cat)}
+                className="px-2.5 py-1 rounded-full bg-slate-100 hover:bg-orange-50 hover:text-orange-600 text-slate-700 text-[11px] font-medium shrink-0 transition-colors cursor-pointer"
+              >
+                {tCategory(cat)}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Sub-Navigation: Categories Bar */}
+      {/* Sub-Navigation: Categories Bar (Desktop) */}
       <div className="hidden md:block bg-slate-50/80 border-t border-slate-200/60 px-4 sm:px-6">
         <div className="max-w-[1500px] mx-auto flex items-center justify-between text-xs font-semibold text-slate-700">
           <div className="flex items-center gap-1 overflow-x-auto py-2">
@@ -431,107 +409,186 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={() => onNavigate('products', 'deals')}
               className="flex items-center gap-1 hover:underline cursor-pointer"
             >
-              <Zap className="w-3.5 h-3.5" /> {t('nav.flashDealsPromo')}
+              <Zap className="size-3.5" /> {t('nav.flashDealsPromo')}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile Menu Drawer */}
-      {mobileMenuOpen && (
-        <div className="md:hidden fixed inset-x-0 top-[110px] bottom-0 bg-slate-900/40 backdrop-blur-sm z-50">
-          <div className="bg-white border-b border-slate-200 p-5 shadow-2xl max-h-[85vh] overflow-y-auto flex flex-col gap-4 animate-fade-in">
-            {/* Mobile Language Switcher */}
-            <div className="pb-3 border-b border-slate-100">
-              <LanguageSelector variant="mobile" />
-            </div>
+      {/* Mobile Menu Drawer (Slide-over with overlay) */}
+      {mobileMenuOpen &&
+        createPortal(
+          <div className="md:hidden fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+            {/* Backdrop click to close */}
+            <div
+              className="flex-1"
+              onClick={() => setMobileMenuOpen(false)}
+              aria-label="Close menu backdrop"
+            />
 
-            <div className="flex flex-col gap-1">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('nav.mainPages')}</span>
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  onNavigate('home');
-                }}
-                className="text-left py-2 text-sm font-bold text-slate-800 cursor-pointer"
-              >
-                {t('nav.home')}
-              </button>
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  onNavigate('products');
-                }}
-                className="text-left py-2 text-sm font-bold text-slate-800 cursor-pointer"
-              >
-                {t('nav.browseAllProducts')}
-              </button>
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  onNavigate('cart');
-                }}
-                className="text-left py-2 text-sm font-bold text-slate-800 flex items-center justify-between cursor-pointer"
-              >
-                <span>{t('nav.shoppingCart')}</span>
-                <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-bold">
-                  {totalItemsCount}
-                </span>
-              </button>
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  onNavigate('wishlist');
-                }}
-                className="text-left py-2 text-sm font-bold text-slate-800 flex items-center justify-between cursor-pointer"
-              >
-                <span>{t('nav.savedWishlist')}</span>
-                <span className="text-xs bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full font-bold">
-                  {wishlistCount}
-                </span>
-              </button>
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  onNavigate('orders');
-                }}
-                className="text-left py-2 text-sm font-bold text-slate-800 cursor-pointer"
-              >
-                {t('nav.trackOrders')}
-              </button>
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  onNavigate('admin');
-                }}
-                className="text-left py-2 text-sm font-bold text-blue-600 cursor-pointer"
-              >
-                {t('nav.adminDashboardDemo')}
-              </button>
-            </div>
+            {/* Drawer container */}
+            <div className="w-full max-w-xs sm:max-w-sm bg-white h-full shadow-2xl flex flex-col justify-between overflow-y-auto animate-scale">
+              {/* Header */}
+              <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+                <BrandLogo size="sm" />
+                <button
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-1.5 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-900 cursor-pointer"
+                  aria-label="Close menu"
+                >
+                  <X className="size-5" />
+                </button>
+              </div>
 
-            <div className="border-t border-slate-100 pt-3">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
-                {t('nav.browseByCategory')}
-              </span>
-              <div className="grid grid-cols-2 gap-2">
-                {CATEGORIES.map((cat) => (
+              {/* Scrollable Body */}
+              <div className="p-4 flex-1 flex flex-col gap-4 overflow-y-auto">
+                {/* User Account / Auth Card */}
+                {isAuthenticated && user ? (
+                  <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="size-9 rounded-full bg-[#E84A27] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                        {user.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-slate-900 truncate">{user.name}</p>
+                        <p className="text-[11px] text-slate-500 truncate">{user.email}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        logout();
+                      }}
+                      className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg cursor-pointer"
+                      title={t('nav.signOut')}
+                    >
+                      <LogOut className="size-4" />
+                    </button>
+                  </div>
+                ) : (
                   <button
-                    key={cat}
                     onClick={() => {
                       setMobileMenuOpen(false);
-                      onNavigate('products', cat);
+                      onOpenAuthModal ? onOpenAuthModal() : onNavigate('login');
                     }}
-                    className="text-left p-2 rounded-lg bg-slate-50 text-xs font-semibold text-slate-700 hover:bg-orange-50 hover:text-orange-600 cursor-pointer"
+                    className="w-full py-2.5 px-4 bg-[#E84A27] hover:bg-[#d63f1f] text-white font-extrabold text-xs rounded-xl shadow-md flex items-center justify-center gap-2 cursor-pointer transition-colors"
                   >
-                    {tCategory(cat)}
+                    <UserIcon className="size-4" />
+                    <span>{t('nav.signInRegister')}</span>
                   </button>
-                ))}
+                )}
+
+                {/* Main Navigation links */}
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t('nav.mainPages')}</span>
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      onNavigate('home');
+                    }}
+                    className="text-left px-3 py-2 rounded-xl text-xs font-bold text-slate-800 hover:bg-slate-50 flex items-center justify-between cursor-pointer"
+                  >
+                    <span>{t('nav.home')}</span>
+                    <ChevronRight className="size-3.5 text-slate-400" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      onNavigate('products');
+                    }}
+                    className="text-left px-3 py-2 rounded-xl text-xs font-bold text-slate-800 hover:bg-slate-50 flex items-center justify-between cursor-pointer"
+                  >
+                    <span>{t('nav.browseAllProducts')}</span>
+                    <ChevronRight className="size-3.5 text-slate-400" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      onNavigate('cart');
+                    }}
+                    className="text-left px-3 py-2 rounded-xl text-xs font-bold text-slate-800 hover:bg-slate-50 flex items-center justify-between cursor-pointer"
+                  >
+                    <span>{t('nav.shoppingCart')}</span>
+                    <span className="text-[11px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-bold">
+                      {totalItemsCount}
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      onNavigate('wishlist');
+                    }}
+                    className="text-left px-3 py-2 rounded-xl text-xs font-bold text-slate-800 hover:bg-slate-50 flex items-center justify-between cursor-pointer"
+                  >
+                    <span>{t('nav.savedWishlist')}</span>
+                    <span className="text-[11px] bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full font-bold">
+                      {wishlistCount}
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      onNavigate('orders');
+                    }}
+                    className="text-left px-3 py-2 rounded-xl text-xs font-bold text-slate-800 hover:bg-slate-50 flex items-center justify-between cursor-pointer"
+                  >
+                    <span>{t('nav.trackOrders')}</span>
+                    <ChevronRight className="size-3.5 text-slate-400" />
+                  </button>
+                  {isAuthenticated && (
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        onNavigate('profile');
+                      }}
+                      className="text-left px-3 py-2 rounded-xl text-xs font-bold text-slate-800 hover:bg-slate-50 flex items-center justify-between cursor-pointer"
+                    >
+                      <span>{t('nav.myProfile')}</span>
+                      <ChevronRight className="size-3.5 text-slate-400" />
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      onNavigate('admin');
+                    }}
+                    className="text-left px-3 py-2 rounded-xl text-xs font-bold text-emerald-700 hover:bg-emerald-50 flex items-center justify-between cursor-pointer"
+                  >
+                    <span>{t('nav.adminDashboardDemo')}</span>
+                    <span className="text-[10px] px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold">Portal</span>
+                  </button>
+                </div>
+
+                {/* Categories Grid */}
+                <div className="border-t border-slate-100 pt-3">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
+                    {t('nav.browseByCategory')}
+                  </span>
+                  <div className="grid grid-cols-2 gap-2">
+                    {CATEGORIES.map((cat) => (
+                      <button
+                        key={cat}
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          onNavigate('products', cat);
+                        }}
+                        className="text-left p-2 rounded-xl bg-slate-50 text-[11px] font-semibold text-slate-700 hover:bg-orange-50 hover:text-orange-600 cursor-pointer transition-colors"
+                      >
+                        {tCategory(cat)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom Footer in Drawer: Language Selector */}
+              <div className="p-4 border-t border-slate-100 bg-slate-50/50">
+                <LanguageSelector variant="mobile" />
               </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </header>
   );
 };

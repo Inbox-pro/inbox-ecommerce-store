@@ -94,3 +94,4 @@ describe('printInvoice Utility — Standard Bill Generator', () => {
     expect(html).not.toContain('Subscribe to Newsletter');
   });
 });
+

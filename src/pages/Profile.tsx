@@ -39,7 +39,7 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
   const [postalCode, setPostalCode] = useState('');
   const [country, setCountry] = useState('India');
 
-  if (!user) {
+  if (!user || user.role !== 'customer') {
     return (
       <div className="max-w-2xl mx-auto px-4 py-16 text-center">
         <h2 className="text-xl font-bold text-slate-800">{t('profile.notLoggedInTitle')}</h2>

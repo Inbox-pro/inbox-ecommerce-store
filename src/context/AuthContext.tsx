@@ -12,7 +12,7 @@ interface AuthContextType {
   isSuperAdmin: boolean;
   isLoading: boolean;
   refreshUser: () => Promise<User | null>;
-  login: (email: string, password?: string) => Promise<User>;
+  login: (email: string, password?: string, portal?: string) => Promise<User>;
   register: (name: string, email: string, password: string, phone?: string) => Promise<User>;
   logout: () => Promise<void>;
   updateProfile: (updates: Partial<User>) => Promise<User>;
@@ -51,9 +51,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  const login = async (email: string, password?: string): Promise<User> => {
+  const login = async (email: string, password?: string, portal?: string): Promise<User> => {
     try {
-      const loggedUser = await authService.login(email, password);
+      const loggedUser = await authService.login(email, password, portal);
       setUser(loggedUser);
       showToast(t('toast.welcomeUser', { name: loggedUser.name }), {
         message: loggedUser.role === 'admin' ? t('toast.adminPrivileges') : t('toast.readyShopping'),
@@ -126,9 +126,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const isAuthenticated = Boolean(user);
+  const isAuthenticated = Boolean(user && user.role === 'customer');
   const isSuperAdmin = user?.role === 'superadmin';
-  const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
+  const isAdmin = user?.role === 'admin';
   const defaultAddress = user?.addresses?.find((a) => a.isDefault) || user?.addresses?.[0] || null;
 
   return (

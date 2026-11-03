@@ -44,10 +44,10 @@ interface SuperAdminDashboardProps {
   onOpenAuthModal?: () => void;
 }
 
-type TabKey = 'applications' | 'admins' | 'architecture';
+type TabKey = 'applications' | 'admins' | 'architecture' | 'credentials';
 
 export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ onNavigate, onOpenAuthModal }) => {
-  const { user, isSuperAdmin, login, logout } = useAuth();
+  const { user, isSuperAdmin, login, logout, refreshUser } = useAuth();
   const { showToast } = useToast();
 
   // Standalone inline login state for private /super-admin portal
@@ -71,6 +71,16 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ onNavi
   const [rejectModalApp, setRejectModalApp] = useState<SellerApplication | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [isProcessingAction, setIsProcessingAction] = useState(false);
+  // Credentials update state
+  const [credOldPassword, setCredOldPassword] = useState('');
+  const [credNewEmail, setCredNewEmail] = useState('');
+  const [credNewPassword, setCredNewPassword] = useState('');
+  const [credConfirmPassword, setCredConfirmPassword] = useState('');
+  const [showOldPass, setShowOldPass] = useState(false);
+  const [showNewPass, setShowNewPass] = useState(false);
+  const [isUpdatingCreds, setIsUpdatingCreds] = useState(false);
+  const [credError, setCredError] = useState('');
+  const [credSuccess, setCredSuccess] = useState('');
 
   // Load initial data
   const loadData = async () => {
@@ -113,6 +123,73 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ onNavi
       showToast('Approval Failed', { message: err?.message || 'Error approving', type: 'error' });
     } finally {
       setIsProcessingAction(false);
+    }
+  };
+
+
+  const handleUpdateCredentials = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCredError('');
+    setCredSuccess('');
+
+    if (!credOldPassword) {
+      setCredError('Current password is required to authorize changes.');
+      return;
+    }
+
+    const trimmedEmail = credNewEmail.trim().toLowerCase();
+    const trimmedPassword = credNewPassword.trim();
+    const emailChanged = Boolean(trimmedEmail && trimmedEmail !== user?.email?.toLowerCase());
+    const passwordChanged = trimmedPassword.length > 0;
+
+    if (!emailChanged && !passwordChanged) {
+      setCredError('Please specify a new email or password that differs from your current settings.');
+      return;
+    }
+
+    if (passwordChanged) {
+      if (trimmedPassword.length < 8) {
+        setCredError('New password must be at least 8 characters long.');
+        return;
+      }
+      if (trimmedPassword !== credConfirmPassword.trim()) {
+        setCredError('New password and confirmation do not match.');
+        return;
+      }
+    }
+
+    try {
+      setIsUpdatingCreds(true);
+      const res = await superAdminService.updateCredentials({
+        currentPassword: credOldPassword,
+        newEmail: emailChanged ? trimmedEmail : undefined,
+        newPassword: passwordChanged ? trimmedPassword : undefined,
+      });
+
+      showToast('Credentials Updated', {
+        message: res.message || 'Super Admin credentials successfully updated.',
+        type: 'success',
+      });
+
+      setCredOldPassword('');
+      setCredNewPassword('');
+      setCredConfirmPassword('');
+      setCredError('');
+      setCredSuccess('');
+      if (refreshUser) {
+        await refreshUser();
+      }
+      await loadData();
+      // Redirect to Super Admin home page (applications tab)
+      setActiveTab('applications');
+    } catch (err: any) {
+      setCredError(err?.message || 'Failed to update credentials. Please check your current password.');
+      showToast('Update Failed', {
+        message: err?.message || 'Could not update credentials.',
+        type: 'error',
+      });
+    } finally {
+      setIsUpdatingCreds(false);
     }
   };
 
@@ -200,7 +277,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ onNavi
       }
       try {
         setIsMasterLoggingIn(true);
-        await login(masterEmail.trim(), masterPassword);
+        await login(masterEmail.trim(), masterPassword, 'superadmin');
         showToast('Super Admin Authenticated', {
           message: 'Welcome to the Platform Master Console.',
           type: 'success',
@@ -211,12 +288,6 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ onNavi
       } finally {
         setIsMasterLoggingIn(false);
       }
-    };
-
-    const handleFillSuperAdminDemo = () => {
-      setMasterEmail('superadmin@inbox.com');
-      setMasterPassword('SuperAdmin2026!');
-      setMasterLoginError('');
     };
 
     return (
@@ -241,21 +312,6 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ onNavi
             </p>
           </div>
 
-          {/* Demo Helper Button */}
-          <div className="mb-4 p-3 rounded-xl bg-purple-50 border border-purple-200 flex items-center justify-between text-left">
-            <div>
-              <p className="text-[11px] font-bold text-purple-900">Platform Super Admin</p>
-              <p className="text-[10px] text-purple-700 font-mono">superadmin@inbox.com</p>
-            </div>
-            <button
-              type="button"
-              onClick={handleFillSuperAdminDemo}
-              className="px-2.5 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg text-[10px] font-bold transition-colors cursor-pointer shadow-xs"
-            >
-              Fill Credentials
-            </button>
-          </div>
-
           {masterLoginError && (
             <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium flex items-center gap-2">
               <AlertTriangle className="size-4 shrink-0 text-rose-600" />
@@ -273,7 +329,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ onNavi
                   required
                   value={masterEmail}
                   onChange={(e) => setMasterEmail(e.target.value)}
-                  placeholder="superadmin@inbox.com"
+                  placeholder="superadmin@gmail.com"
                   className="w-full pl-9 pr-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600"
                 />
               </div>
@@ -311,20 +367,13 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ onNavi
             </button>
           </form>
 
-          <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+          <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-center text-xs text-slate-500">
             <button
               type="button"
               onClick={() => onNavigate('home')}
               className="hover:text-indigo-600 transition-colors cursor-pointer"
             >
               ← Customer Storefront
-            </button>
-            <button
-              type="button"
-              onClick={() => onNavigate('admin')}
-              className="hover:text-[#008060] font-semibold transition-colors cursor-pointer"
-            >
-              Merchant Admin Portal →
             </button>
           </div>
         </div>
@@ -379,17 +428,29 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ onNavi
           </div>
 
           <button
-            onClick={() => onNavigate('admin')}
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold transition-colors cursor-pointer border border-slate-200 shadow-xs"
-            title="Preview merchant admin view"
+            onClick={() => {
+              setActiveTab('credentials');
+              setCredError('');
+              setCredSuccess('');
+              if (!credNewEmail && user?.email) setCredNewEmail(user.email);
+            }}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-colors cursor-pointer shadow-xs ${
+              activeTab === 'credentials'
+                ? 'bg-purple-50 border-purple-300 text-purple-700'
+                : 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700'
+            }`}
+            title="Change Super Admin Email & Password"
           >
-            <Store className="size-3.5 text-[#008060]" />
-            <span>Merchant Admin</span>
+            <KeyRound className="size-3.5 text-purple-600" />
+            <span className="hidden sm:inline">Set Credentials</span>
           </button>
-
           <button
-            onClick={() => onNavigate('home')}
+            onClick={async () => {
+              await logout();
+              onNavigate('home');
+            }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold transition-colors cursor-pointer border border-slate-200 shadow-xs"
+            title="View customer storefront (redirects without login)"
           >
             <ArrowUpRight className="size-3.5 text-indigo-600" />
             <span className="hidden sm:inline">Storefront</span>
@@ -515,6 +576,23 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ onNavi
               <Layers className="size-3.5" />
               <span>Marketplace Architecture</span>
             </button>
+            <button
+              onClick={() => {
+                setActiveTab('credentials');
+                setCredError('');
+                setCredSuccess('');
+                if (!credNewEmail && user?.email) setCredNewEmail(user.email);
+              }}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                activeTab === 'credentials'
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <KeyRound className="size-3.5" />
+              <span>Credentials & Security</span>
+            </button>
+
           </div>
 
           <button
@@ -936,6 +1014,188 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ onNavi
                 </li>
               </ol>
             </div>
+          </div>
+        </main>
+      )}
+
+
+      {/* ======================================================== */}
+      {/* 5B. TAB 4: SUPER ADMIN SECURITY & CREDENTIALS MANAGEMENT */}
+      {/* ======================================================== */}
+      {activeTab === 'credentials' && (
+        <main className="max-w-4xl mx-auto px-4 sm:px-8 py-6 space-y-6 text-left">
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
+              <div>
+                <span className="px-3 py-1 rounded-full bg-purple-50 border border-purple-200 text-purple-700 text-[10px] font-bold uppercase tracking-wider">
+                  Master Security Settings
+                </span>
+                <h2 className="text-xl sm:text-2xl font-black text-slate-900 mt-2">
+                  Super Admin Credentials Management
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                  Update the platform master email address and master password. Verification with your current password is required.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 p-3 bg-purple-50 rounded-2xl border border-purple-200 text-purple-900 text-xs shrink-0">
+                <ShieldCheck className="size-5 text-purple-600 shrink-0" />
+                <div>
+                  <div className="font-bold text-[11px]">Active Session: {user?.email}</div>
+                  <div className="text-[10px] text-purple-700">Role: Platform Master (Super Admin)</div>
+                </div>
+              </div>
+            </div>
+
+            {credSuccess && (
+              <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-center gap-3">
+                <CheckCircle2 className="size-5 shrink-0 text-emerald-600" />
+                <div className="flex-1">
+                  <div className="font-bold">Credentials Updated Successfully</div>
+                  <div>{credSuccess}</div>
+                </div>
+              </div>
+            )}
+
+            {credError && (
+              <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium flex items-center gap-3">
+                <AlertTriangle className="size-5 shrink-0 text-rose-600" />
+                <div className="flex-1">
+                  <div className="font-bold">Update Failed</div>
+                  <div>{credError}</div>
+                </div>
+              </div>
+            )}
+
+            <form onSubmit={handleUpdateCredentials} className="space-y-5 max-w-2xl">
+              {/* Current Password Field */}
+              <div className="p-4 rounded-2xl bg-amber-50/60 border border-amber-200/80 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-black uppercase tracking-wider text-amber-900">
+                    Current Password <span className="text-rose-500">*</span>
+                  </label>
+                  <span className="text-[11px] text-amber-700 font-medium">Required for authorization</span>
+                </div>
+                <div className="relative">
+                  <Lock className="size-4 text-slate-400 absolute left-3.5 top-3" />
+                  <input
+                    type={showOldPass ? 'text' : 'password'}
+                    required
+                    value={credOldPassword}
+                    onChange={(e) => setCredOldPassword(e.target.value)}
+                    placeholder="Enter your current Super Admin password"
+                    className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowOldPass(!showOldPass)}
+                    className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    {showOldPass ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* New Email */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-slate-700">
+                  New Super Admin Email
+                </label>
+                <div className="relative">
+                  <Mail className="size-4 text-slate-400 absolute left-3.5 top-3" />
+                  <input
+                    type="email"
+                    value={credNewEmail}
+                    onChange={(e) => setCredNewEmail(e.target.value)}
+                    placeholder={user?.email || 'superadmin@gmail.com'}
+                    className="w-full pl-10 pr-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600"
+                  />
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  Current email: <strong className="text-slate-800">{user?.email}</strong>. Default is <code className="bg-slate-100 px-1 py-0.5 rounded text-indigo-700">superadmin@gmail.com</code>.
+                </p>
+              </div>
+
+              {/* New Password & Confirmation */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700">
+                    New Password
+                  </label>
+                  <div className="relative">
+                    <Lock className="size-4 text-slate-400 absolute left-3.5 top-3" />
+                    <input
+                      type={showNewPass ? 'text' : 'password'}
+                      value={credNewPassword}
+                      onChange={(e) => setCredNewPassword(e.target.value)}
+                      placeholder="Minimum 8 characters"
+                      className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPass(!showNewPass)}
+                      className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 cursor-pointer"
+                    >
+                      {showNewPass ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-slate-400">Leave blank if keeping current password.</p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700">
+                    Confirm New Password
+                  </label>
+                  <div className="relative">
+                    <Lock className="size-4 text-slate-400 absolute left-3.5 top-3" />
+                    <input
+                      type={showNewPass ? 'text' : 'password'}
+                      value={credConfirmPassword}
+                      onChange={(e) => setCredConfirmPassword(e.target.value)}
+                      placeholder="Repeat new password"
+                      className="w-full pl-10 pr-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600"
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-400">Must match the new password above.</p>
+                </div>
+              </div>
+
+              {/* Submit Buttons */}
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('applications')}
+                    className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer"
+                  >
+                    ← Back to Dashboard
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCredOldPassword('');
+                      setCredNewPassword('');
+                      setCredConfirmPassword('');
+                      setCredNewEmail(user?.email || '');
+                      setCredError('');
+                      setCredSuccess('');
+                    }}
+                    className="px-3 py-2 text-xs font-medium text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    Reset Form
+                  </button>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isUpdatingCreds || !credOldPassword}
+                  className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer flex items-center gap-2"
+                >
+                  <KeyRound className="size-4" />
+                  <span>{isUpdatingCreds ? 'Updating Credentials...' : 'Save New Credentials'}</span>
+                </button>
+              </div>
+            </form>
           </div>
         </main>
       )}

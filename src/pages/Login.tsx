@@ -24,7 +24,7 @@ interface LoginProps {
 }
 
 export const Login: React.FC<LoginProps> = ({ onNavigate, redirectTarget }) => {
-  const { login, register } = useAuth();
+  const { login, register, logout } = useAuth();
   const { t } = useTranslation();
 
   const [mode, setMode] = useState<'login' | 'register' | 'forgot'>('login');
@@ -113,7 +113,22 @@ export const Login: React.FC<LoginProps> = ({ onNavigate, redirectTarget }) => {
         if (!email.trim() || !password) {
           throw new Error('Please enter both your email address and password.');
         }
-        const logged = await login(email.trim(), password);
+        const portal = redirectTarget === 'admin' ? 'admin' : redirectTarget === 'super-admin' ? 'superadmin' : 'customer';
+        const logged = await login(email.trim(), password, portal);
+        if (portal === 'customer' && (logged?.role === 'admin' || logged?.role === 'superadmin')) {
+          await logout();
+          setErrorMsg(
+            logged.role === 'admin'
+              ? 'Merchant Admin accounts cannot log into the Customer Storefront. Please sign in through the Merchant Admin Portal (/admin).'
+              : 'Super Admin accounts cannot log into the Customer Storefront. Please sign in through the Super Admin Console (/super-admin).'
+          );
+          return;
+        }
+        if (portal === 'admin' && logged?.role === 'superadmin') {
+          await logout();
+          setErrorMsg('Super Admin accounts cannot log into the Merchant Admin panel. Please sign in via the Super Admin Console at /super-admin.');
+          return;
+        }
         handlePostAuthRedirect(logged?.role);
       } else if (mode === 'register') {
         if (!name.trim() || !email.trim() || !password) {

@@ -140,7 +140,7 @@ authRouter.get('/csrf-token', csrfProtection, (req: Request, res: Response): voi
 // POST /api/auth/login
 authRouter.post('/login', csrfProtection, async (req: Request, res: Response): Promise<void> => {
   const requestId = res.getHeader('x-request-id') as string;
-  const { email, password } = req.body;
+  const { email, password, portal } = req.body;
 
   const cleanEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
   const ip = req.ip || req.socket.remoteAddress || 'unknown';
@@ -183,6 +183,44 @@ authRouter.post('/login', csrfProtection, async (req: Request, res: Response): P
       error: { code: 'INVALID_CREDENTIALS', message: 'Invalid email or password', requestId },
     });
     return;
+  }
+
+  // Role-based portal restrictions
+  if (portal === 'customer' || portal === 'user') {
+    if (user.role === Role.ADMIN || user.role === Role.SUPER_ADMIN) {
+      res.status(403).json({
+        error: {
+          code: 'ROLE_PORTAL_MISMATCH',
+          message: user.role === Role.ADMIN
+            ? 'Merchant Admin accounts cannot log into the Customer Storefront. Please sign in through the Merchant Admin Portal (/admin).'
+            : 'Super Admin accounts cannot log into the Customer Storefront. Please sign in through the Super Admin Console (/super-admin).',
+          requestId,
+        },
+      });
+      return;
+    }
+  } else if (portal === 'admin') {
+    if (user.role === Role.SUPER_ADMIN) {
+      res.status(403).json({
+        error: {
+          code: 'ROLE_PORTAL_MISMATCH',
+          message: 'Super Admin accounts cannot log into the Merchant Admin panel. Please sign in via the Super Admin Console at /super-admin.',
+          requestId,
+        },
+      });
+      return;
+    }
+  } else if (portal === 'superadmin') {
+    if (user.role !== Role.SUPER_ADMIN) {
+      res.status(403).json({
+        error: {
+          code: 'ROLE_PORTAL_MISMATCH',
+          message: 'Access restricted: Only Super Admin credentials can sign into the Platform Master Console.',
+          requestId,
+        },
+      });
+      return;
+    }
   }
 
   clearRateLimit(throttleKey);

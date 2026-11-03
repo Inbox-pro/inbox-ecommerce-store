@@ -18,6 +18,27 @@ export const superAdminRouter = Router();
 
 // POST /api/super-admin/seller-apply - Apply to become a marketplace seller / admin
 superAdminRouter.post('/seller-apply', optionalAuth, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  // 1. Role Boundary Guard: Administrative accounts cannot apply for merchant status
+  if (req.user?.role === Role.SUPER_ADMIN) {
+    res.status(403).json({
+      error: {
+        code: 'ROLE_PORTAL_MISMATCH',
+        message: 'Super Admin accounts cannot apply for merchant status. Please sign out and register with a customer account.',
+      },
+    });
+    return;
+  }
+
+  if (req.user?.role === Role.ADMIN) {
+    res.status(403).json({
+      error: {
+        code: 'ALREADY_MERCHANT',
+        message: 'You are already an approved Merchant Admin. Additional seller applications are not permitted.',
+      },
+    });
+    return;
+  }
+
   const {
     name,
     storeName,
@@ -40,6 +61,27 @@ superAdminRouter.post('/seller-apply', optionalAuth, async (req: AuthenticatedRe
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!cleanEmail || !emailRegex.test(cleanEmail)) {
     res.status(400).json({ error: { code: 'INVALID_INPUT', message: 'A valid business email address is required' } });
+    return;
+  }
+
+  // Check if target email belongs to an administrative role
+  const existingUserAccount = await prisma.user.findUnique({ where: { email: cleanEmail } });
+  if (existingUserAccount?.role === Role.SUPER_ADMIN) {
+    res.status(403).json({
+      error: {
+        code: 'ROLE_PORTAL_MISMATCH',
+        message: 'This email belongs to a Super Admin account. Platform administrative credentials cannot be used for merchant applications.',
+      },
+    });
+    return;
+  }
+  if (existingUserAccount?.role === Role.ADMIN) {
+    res.status(403).json({
+      error: {
+        code: 'ALREADY_MERCHANT',
+        message: 'This email is already registered as an approved Merchant Admin.',
+      },
+    });
     return;
   }
 
@@ -218,6 +260,11 @@ superAdminRouter.patch('/applications/:id/approve', async (req: AuthenticatedReq
     return;
   }
 
+  if (applicant.role === Role.SUPER_ADMIN) {
+    res.status(400).json({ error: { code: 'ROLE_MISMATCH', message: 'Cannot promote a Super Admin account to Merchant Admin.' } });
+    return;
+  }
+
   const updatedApp = await prisma.$transaction(async (tx) => {
     // 1. Update application status
     const app = await tx.sellerApplication.update({
@@ -235,7 +282,7 @@ superAdminRouter.patch('/applications/:id/approve', async (req: AuthenticatedReq
       await tx.user.update({
         where: { id: existingUser.id },
         data: {
-          role: existingUser.role === Role.SUPER_ADMIN ? Role.SUPER_ADMIN : Role.ADMIN,
+          role: Role.ADMIN,
           sellerStatus: SellerStatus.APPROVED,
           storeName: application.storeName,
         },
@@ -470,6 +517,97 @@ superAdminRouter.patch('/admins/:id/status', async (req: AuthenticatedRequest, r
         email: updated.email,
         role: updated.role,
         sellerStatus: updated.sellerStatus,
+      },
+    },
+  });
+});
+
+// PUT /api/super-admin/credentials - Update Super Admin email and/or password
+superAdminRouter.put('/credentials', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  const { currentPassword, newEmail, newPassword } = req.body;
+
+  if (!currentPassword || typeof currentPassword !== 'string') {
+    res.status(400).json({ error: { code: 'INVALID_INPUT', message: 'Current password is required to update credentials.' } });
+    return;
+  }
+
+  const currentUser = await prisma.user.findUnique({
+    where: { id: req.user!.id },
+  });
+
+  if (!currentUser) {
+    res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User account not found.' } });
+    return;
+  }
+
+  const isPasswordValid = await bcrypt.compare(currentPassword, currentUser.passwordHash);
+  if (!isPasswordValid) {
+    res.status(400).json({ error: { code: 'INVALID_CREDENTIALS', message: 'Current password is incorrect.' } });
+    return;
+  }
+
+  let cleanEmail: string | undefined = undefined;
+  if (newEmail !== undefined && newEmail !== null) {
+    const trimmed = String(newEmail).trim().toLowerCase();
+    if (trimmed.length > 0 && trimmed !== currentUser.email.toLowerCase()) {
+      const emailRegex = /^[^s@]+@[^s@]+.[^s@]+$/;
+      if (!emailRegex.test(trimmed)) {
+        res.status(400).json({ error: { code: 'INVALID_INPUT', message: 'Invalid new email format.' } });
+        return;
+      }
+      const existingUser = await prisma.user.findUnique({ where: { email: trimmed } });
+      if (existingUser && existingUser.id !== currentUser.id) {
+        res.status(409).json({ error: { code: 'EMAIL_ALREADY_EXISTS', message: 'The specified email address is already in use.' } });
+        return;
+      }
+      cleanEmail = trimmed;
+    }
+  }
+
+  let newPasswordHash: string | undefined = undefined;
+  if (newPassword !== undefined && newPassword !== null) {
+    const trimmedPassword = String(newPassword).trim();
+    if (trimmedPassword.length > 0) {
+      if (trimmedPassword.length < 8) {
+        res.status(400).json({ error: { code: 'INVALID_INPUT', message: 'New password must be at least 8 characters long.' } });
+        return;
+      }
+      newPasswordHash = await bcrypt.hash(trimmedPassword, 12);
+    }
+  }
+
+  if (!cleanEmail && !newPasswordHash) {
+    res.status(400).json({ error: { code: 'NO_CHANGES', message: 'Please provide a new email or password that is different from your current credentials.' } });
+    return;
+  }
+
+  const updatedUser = await prisma.$transaction(async (tx) => {
+    const updated = await tx.user.update({
+      where: { id: currentUser.id },
+      data: {
+        ...(cleanEmail ? { email: cleanEmail } : {}),
+        ...(newPasswordHash ? { passwordHash: newPasswordHash } : {}),
+      },
+    });
+
+    if (cleanEmail) {
+      await tx.sellerApplication.updateMany({
+        where: { userId: currentUser.id },
+        data: { email: cleanEmail },
+      });
+    }
+
+    return updated;
+  });
+
+  res.status(200).json({
+    data: {
+      message: 'Super Admin credentials updated successfully.',
+      user: {
+        id: updatedUser.id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        role: updatedUser.role === Role.SUPER_ADMIN ? 'superadmin' : updatedUser.role === Role.ADMIN ? 'admin' : 'customer',
       },
     },
   });

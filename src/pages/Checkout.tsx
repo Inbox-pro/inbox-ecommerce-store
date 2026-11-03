@@ -82,6 +82,23 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate, onOrderPlaced })
     }
   }, [items.length, isProcessing]);
 
+  if (user && user.role !== 'customer') {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-20 text-center">
+        <h2 className="text-xl font-bold text-slate-800">Checkout Restricted</h2>
+        <p className="text-xs text-slate-500 mt-2 max-w-sm mx-auto">
+          Administrative accounts cannot place customer orders. Please sign in with a customer account to checkout.
+        </p>
+        <button
+          onClick={() => onNavigate('home')}
+          className="mt-5 px-6 py-2.5 bg-[#E84A27] text-white rounded-xl text-xs font-bold cursor-pointer"
+        >
+          Return to Storefront
+        </button>
+      </div>
+    );
+  }
+
   if (items.length === 0 && !isProcessing) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-20 text-center">

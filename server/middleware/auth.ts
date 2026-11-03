@@ -132,7 +132,7 @@ export function requireAdmin(req: AuthenticatedRequest, res: Response, next: Nex
     return;
   }
 
-  if (req.user.role !== Role.ADMIN && req.user.role !== Role.SUPER_ADMIN) {
+  if (req.user.role !== Role.ADMIN) {
     res.status(403).json({
       error: {
         code: 'FORBIDDEN',

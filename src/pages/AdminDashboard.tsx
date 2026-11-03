@@ -26,6 +26,7 @@ import {
   X,
   ChevronRight,
   ShieldCheck,
+  ShieldAlert,
   Store,
   LogOut,
   ExternalLink,
@@ -117,19 +118,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [legalName, setLegalName] = useState('');
   const [taxId, setTaxId] = useState('');
   const [category, setCategory] = useState('Electronics');
-  const [phone, setPhone] = useState(user?.phone || '');
+  const [phone, setPhone] = useState(user?.role === 'customer' ? user.phone || '' : '');
   const [businessAddress, setBusinessAddress] = useState('');
   const [description, setDescription] = useState('');
 
   // Unauthenticated seller registration fields
-  const [applicantName, setApplicantName] = useState(user?.name || '');
-  const [applicantEmail, setApplicantEmail] = useState(user?.email || '');
+  const [applicantName, setApplicantName] = useState(user?.role === 'customer' ? user.name || '' : '');
+  const [applicantEmail, setApplicantEmail] = useState(user?.role === 'customer' ? user.email || '' : '');
   const [applicantPassword, setApplicantPassword] = useState('');
 
   // Load existing application if user is logged in
   useEffect(() => {
     let isMounted = true;
-    if (user) {
+    if (user && user.role === 'customer') {
       setIsLoadingApp(true);
       superAdminService
         .getMyApplication()
@@ -512,6 +513,53 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     );
   });
 
+  // Super Admin is explicitly restricted from accessing or operating the Merchant Admin panel
+  if (user?.role === 'superadmin') {
+    return (
+      <div className="min-h-screen bg-slate-50 text-slate-900 font-sans antialiased flex items-center justify-center px-4 py-12">
+        <div className="max-w-md w-full bg-white border border-slate-200 rounded-3xl p-8 sm:p-10 shadow-xl relative overflow-hidden text-center animate-in fade-in zoom-in-95 duration-150">
+          <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-purple-600 to-indigo-600" />
+          <div className="size-16 bg-purple-50 text-purple-700 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-purple-200 shadow-inner">
+            <ShieldAlert className="size-8" />
+          </div>
+          <span className="px-3 py-1 rounded-full bg-purple-50 text-purple-800 text-[10px] font-extrabold uppercase tracking-widest border border-purple-200">
+            Portal Access Restricted
+          </span>
+          <h1 className="text-2xl font-black text-slate-900 mt-3 mb-2 tracking-tight">
+            Super Admin Access Restricted
+          </h1>
+          <p className="text-xs text-slate-600 leading-relaxed mb-6">
+            Super Admin accounts cannot operate within or log into the Merchant Admin panel. Platform master governance and merchant verification are handled exclusively in the Super Admin Console.
+          </p>
+
+          <div className="space-y-3">
+            <button
+              onClick={() => onNavigate('super-admin')}
+              className="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
+            >
+              <ShieldCheck className="size-4" />
+              <span>Go to Super Admin Console</span>
+            </button>
+
+            <button
+              onClick={() => onNavigate('home')}
+              className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+            >
+              Customer Storefront
+            </button>
+
+            <button
+              onClick={logout}
+              className="w-full py-2.5 text-xs text-rose-600 hover:text-rose-700 font-medium transition-colors cursor-pointer"
+            >
+              Sign Out of Super Admin
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Security Gate & Onboarding Gateway on /admin
   if (!isAdmin) {
     const handleDirectAdminLogin = async (e: React.FormEvent) => {
@@ -523,7 +571,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       }
       try {
         setIsAdminLoggingIn(true);
-        const loggedUser = await login(adminAuthEmail.trim(), adminAuthPassword);
+        const loggedUser = await login(adminAuthEmail.trim(), adminAuthPassword, 'admin');
         setIsAdminLoginModalOpen(false);
 
         if (loggedUser.role === 'admin' || loggedUser.role === 'superadmin') {
@@ -563,12 +611,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       } finally {
         setIsAdminLoggingIn(false);
       }
-    };
-
-    const handleFillAdminDemo = () => {
-      setAdminAuthEmail('admin@inbox.com');
-      setAdminAuthPassword('AdminSecure2026!');
-      setAdminLoginError('');
     };
 
     const handleApplySellerSubmit = async (e: React.FormEvent) => {
@@ -619,8 +661,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           type: 'success',
         });
 
-        // Redirect to the default page (customer storefront home)
-        onNavigate('home');
+        // Stay on admin onboarding page showing the submitted application status card
       } catch (err: any) {
         showToast('Submission Failed', {
           message: err?.message || 'Could not submit application.',
@@ -1218,21 +1259,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 Access your merchant panel to manage product SKUs, adjust prices, and fulfill orders.
               </p>
 
-              {/* Demo Helper Button */}
-              <div className="mb-4 p-3 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between">
-                <div>
-                  <p className="text-[11px] font-bold text-emerald-900">Demo Store Admin</p>
-                  <p className="text-[10px] text-emerald-700 font-mono">admin@inbox.com</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleFillAdminDemo}
-                  className="px-2.5 py-1.5 bg-[#008060] hover:bg-[#006e52] text-white rounded-lg text-[10px] font-bold transition-colors cursor-pointer shadow-xs"
-                >
-                  Fill Credentials
-                </button>
-              </div>
-
               {adminLoginError && (
                 <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium text-left flex items-center gap-2">
                   <AlertTriangle className="size-4 shrink-0 text-rose-600" />
@@ -1250,7 +1276,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       required
                       value={adminAuthEmail}
                       onChange={(e) => setAdminAuthEmail(e.target.value)}
-                      placeholder="admin@inbox.com"
+                      placeholder="admin@example.com"
                       className="w-full pl-9 pr-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#008060] focus:ring-1 focus:ring-[#008060]"
                     />
                   </div>
@@ -1432,7 +1458,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   {user?.name || 'Store Administrator'}
                 </p>
                 <p className="text-[10px] text-slate-500 truncate leading-tight font-mono">
-                  {user?.email || 'admin@inbox.com'}
+                  {user?.email || 'Store Admin'}
                 </p>
               </div>
             </div>

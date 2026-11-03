@@ -31,7 +31,7 @@ interface SellerOnboardProps {
 }
 
 export const SellerOnboard: React.FC<SellerOnboardProps> = ({ onNavigate, onOpenAuthModal }) => {
-  const { user, isAuthenticated, isAdmin, refreshUser } = useAuth();
+  const { user, isAuthenticated, isAdmin, isSuperAdmin, logout, refreshUser } = useAuth();
   const { showToast } = useToast();
 
   const [existingApp, setExistingApp] = useState<SellerApplication | null>(null);
@@ -44,13 +44,13 @@ export const SellerOnboard: React.FC<SellerOnboardProps> = ({ onNavigate, onOpen
   const [legalName, setLegalName] = useState('');
   const [taxId, setTaxId] = useState('');
   const [category, setCategory] = useState('Electronics');
-  const [phone, setPhone] = useState(user?.phone || '');
+  const [phone, setPhone] = useState(user?.role === 'customer' ? user.phone || '' : '');
   const [businessAddress, setBusinessAddress] = useState('');
   const [description, setDescription] = useState('');
 
   // Unauthenticated user registration fields
-  const [applicantName, setApplicantName] = useState(user?.name || '');
-  const [applicantEmail, setApplicantEmail] = useState(user?.email || '');
+  const [applicantName, setApplicantName] = useState(user?.role === 'customer' ? user.name || '' : '');
+  const [applicantEmail, setApplicantEmail] = useState(user?.role === 'customer' ? user.email || '' : '');
   const [password, setPassword] = useState('');
 
   // Load existing application if user is logged in
@@ -125,6 +125,78 @@ export const SellerOnboard: React.FC<SellerOnboardProps> = ({ onNavigate, onOpen
       setIsSubmitting(false);
     }
   };
+
+  // Super Admin is platform master; administrative accounts cannot apply for merchant status
+  if (user?.role === 'superadmin') {
+    return (
+      <div className="min-h-screen bg-slate-50 text-slate-900 font-sans antialiased flex items-center justify-center px-4 py-12">
+        <div className="max-w-md w-full bg-white border border-slate-200 rounded-3xl p-8 sm:p-10 shadow-xl relative overflow-hidden text-center animate-in fade-in zoom-in-95 duration-150">
+          <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-purple-600 to-indigo-600" />
+          <div className="size-16 bg-purple-50 text-purple-700 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-purple-200 shadow-inner">
+            <ShieldCheck className="size-8" />
+          </div>
+          <span className="px-3 py-1 rounded-full bg-purple-50 text-purple-800 text-[10px] font-extrabold uppercase tracking-widest border border-purple-200">
+            Super Admin Active
+          </span>
+          <h1 className="text-2xl font-black text-slate-900 mt-3 mb-2 tracking-tight">
+            Merchant Application Restricted
+          </h1>
+          <p className="text-xs text-slate-600 leading-relaxed mb-6">
+            You are signed in as Super Admin. Platform master accounts cannot apply for merchant status or operate as sellers.
+          </p>
+          <div className="space-y-3">
+            <button
+              onClick={() => onNavigate('super-admin')}
+              className="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
+            >
+              <ShieldCheck className="size-4" />
+              <span>Go to Super Admin Console</span>
+            </button>
+            <button
+              onClick={async () => {
+                await logout();
+              }}
+              className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+            >
+              Sign Out to Apply as Merchant
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Already verified Merchant Admin
+  if (user?.role === 'admin') {
+    return (
+      <div className="min-h-screen bg-slate-50 text-slate-900 font-sans antialiased flex items-center justify-center px-4 py-12">
+        <div className="max-w-md w-full bg-white border border-slate-200 rounded-3xl p-8 sm:p-10 shadow-xl relative overflow-hidden text-center animate-in fade-in zoom-in-95 duration-150">
+          <div className="absolute top-0 inset-x-0 h-1.5 bg-[#008060]" />
+          <div className="size-16 bg-emerald-50 text-[#008060] rounded-2xl flex items-center justify-center mx-auto mb-4 border border-emerald-200 shadow-inner">
+            <Store className="size-8" />
+          </div>
+          <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-[10px] font-extrabold uppercase tracking-widest border border-emerald-200">
+            Merchant Active
+          </span>
+          <h1 className="text-2xl font-black text-slate-900 mt-3 mb-2 tracking-tight">
+            Already an Approved Merchant
+          </h1>
+          <p className="text-xs text-slate-600 leading-relaxed mb-6">
+            Your account is already an authorized Merchant Admin on inBox. You have full access to manage your catalog, orders, and store operations.
+          </p>
+          <div className="space-y-3">
+            <button
+              onClick={() => onNavigate('admin')}
+              className="w-full py-3 bg-[#008060] hover:bg-[#007054] text-white rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
+            >
+              <Store className="size-4" />
+              <span>Open Merchant Admin Panel</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans">

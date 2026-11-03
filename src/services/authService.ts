@@ -19,10 +19,11 @@ export const authService = {
     }
   },
 
-  async login(email: string, password?: string): Promise<User> {
+  async login(email: string, password?: string, portal?: string): Promise<User> {
     const data = await apiClient.post<{ user: User; message: string }>('/api/auth/login', {
       email,
       password,
+      portal,
     });
     return data.user;
   },

@@ -38,7 +38,7 @@ export const Orders: React.FC<OrdersProps> = ({ onNavigate, onSelectProduct }) =
   useEffect(() => {
     let isMounted = true;
     setOrders([]);
-    if (!user) return;
+    if (!user || user.role !== 'customer') return;
     orderService.getOrders().then((data) => {
       if (isMounted) {
         setOrders(data);
@@ -62,7 +62,7 @@ export const Orders: React.FC<OrdersProps> = ({ onNavigate, onSelectProduct }) =
     return true;
   });
 
-  if (!user) {
+  if (!user || user.role !== 'customer') {
     return (
       <div className="max-w-xl mx-auto px-4 py-16 text-center">
         <div className="size-16 bg-orange-50 text-[#E84A27] rounded-full flex items-center justify-center mx-auto mb-4">

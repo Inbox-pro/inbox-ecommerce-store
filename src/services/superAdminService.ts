@@ -28,6 +28,22 @@ export interface SellerApplyPayload {
   password?: string;
 }
 
+export interface UpdateCredentialsPayload {
+  currentPassword: string;
+  newEmail?: string;
+  newPassword?: string;
+}
+
+export interface UpdateCredentialsResponse {
+  message: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+  };
+}
+
 export const superAdminService = {
   async submitSellerApplication(payload: SellerApplyPayload): Promise<{ application: SellerApplication; message: string }> {
     return apiClient.post('/api/super-admin/seller-apply', payload);
@@ -69,5 +85,8 @@ export const superAdminService = {
   async updateAdminStatus(id: string, updates: { sellerStatus?: string; role?: string }): Promise<{ success: boolean; user: User }> {
     return apiClient.patch(`/api/super-admin/admins/${id}/status`, updates);
   },
-};
 
+  async updateCredentials(payload: UpdateCredentialsPayload): Promise<UpdateCredentialsResponse> {
+    return apiClient.put('/api/super-admin/credentials', payload);
+  },
+};

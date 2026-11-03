@@ -17,7 +17,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   initialMode = 'login',
   onLoginSuccess,
 }) => {
-  const { login, register } = useAuth();
+  const { login, register, logout } = useAuth();
   const { t } = useTranslation();
 
   const [mode, setMode] = useState<'login' | 'register' | 'forgot'>(initialMode);
@@ -45,7 +45,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         if (!email.trim() || !password) {
           throw new Error('Please enter both email and password.');
         }
-        const logged = await login(email, password);
+        const logged = await login(email, password, 'customer');
+        if (logged.role === 'admin' || logged.role === 'superadmin') {
+          await logout();
+          setErrorMsg(
+            logged.role === 'admin'
+              ? 'Merchant Admin accounts cannot log into the Customer Storefront. Please sign in through the Merchant Admin Portal (/admin).'
+              : 'Super Admin accounts cannot log into the Customer Storefront. Please sign in through the Super Admin Console (/super-admin).'
+          );
+          return;
+        }
         if (onLoginSuccess && logged?.role) {
           onLoginSuccess(logged.role);
         }

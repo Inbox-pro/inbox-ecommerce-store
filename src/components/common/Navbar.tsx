@@ -106,6 +106,62 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs print:hidden">
+      {/* Administrative Session Notice Banner for Storefront */}
+      {user?.role === 'superadmin' && (
+        <div className="bg-gradient-to-r from-purple-950 via-purple-900 to-indigo-950 text-white px-4 py-2 text-xs flex flex-wrap items-center justify-between gap-2 shadow-inner border-b border-purple-800">
+          <div className="flex items-center gap-2">
+            <span className="px-2 py-0.5 rounded bg-purple-500/30 text-purple-200 text-[10px] font-black uppercase tracking-wider border border-purple-400/30">
+              Super Admin Active
+            </span>
+            <span className="text-purple-100">
+              Signed in as <strong>{user.email}</strong>. Storefront shopping is restricted to customer accounts.
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onNavigate('super-admin')}
+              className="px-3 py-1 bg-white text-purple-950 font-bold rounded-lg hover:bg-purple-50 transition-colors cursor-pointer text-xs flex items-center gap-1.5 shadow-xs"
+            >
+              <ShieldCheck className="size-3.5 text-purple-700" />
+              <span>Go to Super Admin Console</span>
+            </button>
+            <button
+              onClick={logout}
+              className="px-3 py-1 bg-purple-900/80 hover:bg-purple-800 text-purple-200 font-semibold rounded-lg transition-colors cursor-pointer text-xs"
+            >
+              Sign Out
+            </button>
+          </div>
+        </div>
+      )}
+
+      {user?.role === 'admin' && (
+        <div className="bg-[#004c3f] text-white px-4 py-2 text-xs flex flex-wrap items-center justify-between gap-2 shadow-inner border-b border-emerald-800">
+          <div className="flex items-center gap-2">
+            <span className="px-2 py-0.5 rounded bg-emerald-500/30 text-emerald-200 text-[10px] font-black uppercase tracking-wider border border-emerald-400/30">
+              Merchant Admin Active
+            </span>
+            <span className="text-emerald-100">
+              Signed in as <strong>{user.email}</strong> ({user.storeName || 'Merchant Store'}).
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onNavigate('admin')}
+              className="px-3 py-1 bg-white text-[#004c3f] font-bold rounded-lg hover:bg-emerald-50 transition-colors cursor-pointer text-xs flex items-center gap-1.5 shadow-xs"
+            >
+              <Store className="size-3.5 text-[#008060]" />
+              <span>Go to Merchant Portal</span>
+            </button>
+            <button
+              onClick={logout}
+              className="px-3 py-1 bg-emerald-900/80 hover:bg-emerald-800 text-emerald-200 font-semibold rounded-lg transition-colors cursor-pointer text-xs"
+            >
+              Sign Out
+            </button>
+          </div>
+        </div>
+      )}
       {/* Main Navigation Row */}
       <div className="max-w-[1500px] mx-auto px-4 sm:px-6 py-3">
         <div className="flex items-center justify-between gap-4">
@@ -250,26 +306,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <div className="px-4 py-2 border-b border-slate-100">
                     <p className="text-xs font-bold text-slate-900 truncate">{user.name}</p>
                     <p className="text-[11px] text-slate-500 truncate">{user.email}</p>
-                    {isAdmin && (
-                      <span className="inline-block mt-1 px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 font-bold text-[9px] uppercase">
-                        {t('nav.adminRole')}
-                      </span>
-                    )}
                   </div>
 
                   <div className="py-1">
-                    {isAdmin && (
-                      <button
-                        onClick={() => {
-                          setUserDropdownOpen(false);
-                          onNavigate(isSuperAdmin ? 'super-admin' : 'admin');
-                        }}
-                        className="w-full text-left px-4 py-2 text-xs font-bold text-sky-700 hover:bg-sky-50 flex items-center gap-2 cursor-pointer border-b border-slate-100"
-                      >
-                        <ShieldCheck className="size-4 text-sky-600" />
-                        <span>{isSuperAdmin ? 'Super Admin Console' : 'Admin Portal'}</span>
-                      </button>
-                    )}
                     <button
                       onClick={() => {
                         setUserDropdownOpen(false);
